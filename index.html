@@ -1,0 +1,3678 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutoPost Pro - TikTok & IG Clip Fetcher</title>
+  <meta name="description" content="ดึงคลิป TikTok & Instagram Reels แบบไม่มีลายน้ำ เก็บใน Cloudflare R2" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"
+    rel="stylesheet" />
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --sidebar-bg: #0f172a;
+      --sidebar-active: #4f46e5;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --accent: #4f46e5;
+      --accent-hover: #4338ca;
+      --accent-light: #eeebff;
+      --green: #10b981;
+      --green-light: #ecfdf5;
+      --orange: #f97316;
+      --orange-light: #fff7ed;
+      --blue: #0ea5e9;
+      --blue-light: #f0f9ff;
+      --red: #ef4444;
+      --red-light: #fef2f2;
+      --radius: 20px;
+      --radius-sm: 14px;
+      --shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 10px -1px rgba(15, 23, 42, 0.02);
+      --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: 'Outfit', 'Noto Sans Thai', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* ─── Sidebar ─── */
+    .sidebar {
+      width: 260px;
+      background: var(--sidebar-bg);
+      color: #fff;
+      padding: 28px 18px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+      overflow-y: auto;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 10px 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 24px;
+    }
+
+    .brand-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), #818cf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+      object-fit: cover;
+    }
+
+    .brand-name {
+      font-weight: 700;
+      font-size: 19px;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-sub {
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.45);
+      margin-top: 2px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.6);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      text-decoration: none;
+      margin-bottom: 4px;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+    }
+
+    .nav-item.active {
+      background: var(--sidebar-active);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(79, 70, 229, 0.35);
+    }
+
+    .nav-item .material-symbols-rounded {
+      font-size: 22px;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .nav-item.active .nav-badge {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    body.login-mode .app-shell {
+      display: none;
+    }
+
+    body:not(.login-mode) .login-screen {
+      display: none;
+    }
+
+    .login-screen {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #f8fafc;
+    }
+
+    .login-panel {
+      width: 100%;
+      max-width: 420px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      padding: 28px;
+    }
+
+    .login-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .login-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+
+    .login-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .login-input {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 13px 14px;
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .login-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .login-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .login-error {
+      display: none;
+      color: #991b1b;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .sidebar-section {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255, 255, 255, 0.3);
+      padding: 24px 16px 10px;
+      font-weight: 700;
+    }
+
+    .conn-status {
+      margin-top: auto;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .conn-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse-dot 2s infinite;
+    }
+
+    .conn-dot.online {
+      background: var(--green);
+      box-shadow: 0 0 10px var(--green);
+    }
+
+    .conn-dot.offline {
+      background: var(--red);
+      animation: none;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    /* ─── Main ─── */
+    .main {
+      margin-left: 260px;
+      flex: 1;
+      padding: 32px 40px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      max-width: calc(100vw - 260px);
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.8px;
+    }
+
+    .title-badge {
+      font-size: 13px;
+      font-weight: 700;
+      background: var(--accent-light);
+      color: var(--accent);
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-left: 12px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .page-title .material-symbols-rounded {
+      color: var(--accent);
+      font-size: 32px;
+    }
+
+    .page-desc {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .top-user-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px 10px;
+      box-shadow: var(--shadow);
+      max-width: 360px;
+    }
+
+    .top-user-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: var(--accent-light);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .top-user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .top-user-meta {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .top-user-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .top-user-email {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .top-logout-btn {
+      border: 0;
+      background: var(--red-light);
+      color: var(--red);
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ─── Worker URL Settings ─── */
+    .settings-banner {
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .settings-banner .material-symbols-rounded {
+      font-size: 36px;
+      color: #a5b4fc;
+    }
+
+    .settings-input-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+      flex: 1;
+    }
+
+    .settings-input {
+      flex: 1;
+      padding: 12px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .settings-input:focus {
+      border-color: #a5b4fc;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .settings-input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-settings {
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-settings:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+    }
+
+    /* ─── Unified Workspace Container (Centered) ─── */
+    .workspace-grid {
+      display: block;
+      width: 100%;
+    }
+
+    #createWorkspace {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      width: 100%;
+    }
+
+    /* ─── Card Styles ─── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+
+    /* ─── Two-Column Form Inside Card ─── */
+    .form-preview-grid {
+      display: grid;
+      grid-template-columns: 1fr 240px;
+      gap: 28px;
+    }
+
+    .form-column {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .input-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .input-label .step {
+      background: var(--accent-light);
+      color: var(--accent);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .text-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .text-input-wrapper .material-symbols-rounded {
+      position: absolute;
+      left: 16px;
+      color: var(--text-muted);
+      font-size: 20px;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 14px 18px 14px 46px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      background: #f8fafc;
+      transition: all 0.2s;
+    }
+
+    .text-input:focus {
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+
+    .text-input::placeholder {
+      color: #94a3b8;
+    }
+
+    /* Counter Controls */
+    .counter-control {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: #f8fafc;
+      width: 100%;
+    }
+
+    .counter-btn {
+      border: none;
+      background: transparent;
+      width: 46px;
+      height: 46px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 20px;
+      transition: all 0.15s;
+    }
+
+    .counter-btn:hover {
+      background: #cbd5e1;
+      color: var(--text);
+    }
+
+    .counter-value {
+      flex: 1;
+      border: none;
+      background: transparent;
+      text-align: center;
+      font-weight: 700;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    /* Platform Button Selector */
+    .platform-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .platform-btn {
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .platform-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .platform-btn.active[data-platform="lazada"] {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .platform-btn.active[data-platform="shopee"] {
+      border-color: var(--orange);
+      background: var(--orange-light);
+      color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    }
+
+    .platform-logo {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      object-fit: cover;
+    }
+
+    /* Select Dropdown */
+    .select-input {
+      width: 100%;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      background: #f8fafc;
+      transition: all 0.2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 18px center;
+      background-size: 16px;
+    }
+
+    .select-input:focus {
+      border-color: var(--accent);
+      background: #fff;
+    }
+
+    .form-actions-row {
+      display: grid;
+      grid-template-columns: 1.8fr 1.2fr 0.8fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 14px;
+      padding: 14px 24px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1.5px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-outline {
+      background: #f1f5f9;
+      color: var(--text-muted);
+    }
+
+    .btn-outline:hover {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .btn-secondary {
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+
+    .btn-secondary:hover {
+      background: #e0daff;
+    }
+
+    .btn-sm {
+      padding: 8px 14px;
+      font-size: 13px;
+      border-radius: 10px;
+    }
+
+    .btn-xs {
+      padding: 5px 10px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+
+    /* ─── Video Preview Box ─── */
+    .preview-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .preview-box {
+      width: 240px;
+      height: 426px;
+      /* Perfect 9:16 Aspect Ratio */
+      background: #090d16;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .preview-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .preview-placeholder {
+      text-align: center;
+      color: #475569;
+      padding: 20px;
+    }
+
+    .preview-placeholder .material-symbols-rounded {
+      font-size: 48px;
+      color: #334155;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .preview-placeholder p {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .preview-controls {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+    }
+
+    .loading-overlay p {
+      color: #c7d2fe;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      padding: 0 10px;
+    }
+
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid rgba(79, 70, 229, 0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Status Badges */
+    .status-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      z-index: 5;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .status-badge.saved {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .status-badge.preview {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    /* ─── Today's Stats Card ─── */
+    .stats-card {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      transition: all 0.2s;
+    }
+
+    .stat-row:hover {
+      transform: translateX(2px);
+      border-color: #cbd5e1;
+    }
+
+    .stat-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-icon .material-symbols-rounded {
+      font-size: 20px;
+    }
+
+    .stat-icon.red {
+      background: var(--red-light);
+      color: var(--red);
+    }
+
+    .stat-icon.blue {
+      background: var(--blue-light);
+      color: var(--blue);
+    }
+
+    .stat-icon.green {
+      background: var(--green-light);
+      color: var(--green);
+    }
+
+    .stat-icon.purple {
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+
+    .stat-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .stat-number {
+      font-weight: 800;
+      font-size: 16px;
+      margin-top: 1px;
+    }
+
+    .storage-bar-container {
+      margin-top: 6px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .storage-info-text {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .storage-bar {
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .storage-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent), #818cf8);
+      transition: width 0.5s ease;
+    }
+
+    /* ─── Bottom Section Grid ─── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      align-items: stretch;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      min-height: 520px;
+    }
+
+    /* Left panel — History list */
+    #historyCard {
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      border-right: 1px solid var(--border);
+      padding: 24px 20px;
+      background: #f8fafc;
+    }
+
+    /* Right panel — Detail viewer */
+    #detailCard {
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 24px 24px !important;
+      background: var(--card-bg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Divider line between panels */
+    .panel-divider {
+      width: 1px;
+      background: var(--border);
+    }
+
+    /* History Queue List */
+    .tab-bar {
+      display: flex;
+      gap: 6px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      border: none;
+      background: transparent;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+
+    .queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 560px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .queue-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      cursor: pointer;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .queue-item:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .queue-item.active {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      border-left: 3px solid var(--accent);
+    }
+
+    .queue-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .queue-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .queue-thumb .material-symbols-rounded {
+      font-size: 24px;
+      color: var(--accent);
+    }
+
+    .queue-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .queue-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+
+    .queue-meta {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .badge.lazada {
+      background: #ffe4e6;
+      color: #e11d48;
+    }
+
+    .badge.shopee {
+      background: #ffedd5;
+      color: #ea580c;
+    }
+
+    .badge.tiktok {
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+
+    .badge.instagram {
+      background: #fdf2f8;
+      color: #db2777;
+    }
+
+    .badge.ig {
+      background: #fdf2f8;
+      color: #db2777;
+    }
+
+    .badge.other {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .queue-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .queue-delete {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .queue-delete:hover {
+      background: var(--red-light);
+      color: var(--red);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .material-symbols-rounded {
+      font-size: 40px;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* Post Detail Viewer Panel */
+    .detail-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .detail-subcard {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 18px;
+      position: relative;
+    }
+
+    .subcard-header {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .subcard-header .btn-copy {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .subcard-header .btn-copy:hover {
+      color: var(--accent-hover);
+    }
+
+    .caption-text-area {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--text);
+      word-break: break-word;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .author-info-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .author-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--border);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .author-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .author-avatar .material-symbols-rounded {
+      font-size: 24px;
+      color: var(--text-muted);
+    }
+
+    .author-nickname {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .author-username {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .meta-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .meta-list-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 8px;
+    }
+
+    .meta-list-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .meta-list-label {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .meta-list-value {
+      font-weight: 700;
+      word-break: break-all;
+      text-align: right;
+      max-width: 70%;
+    }
+
+    .meta-list-value a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .meta-list-value a:hover {
+      text-decoration: underline;
+    }
+
+    .stats-bubble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .stat-bubble {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+
+    .bubble-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .bubble-value {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text);
+      margin-top: 2px;
+    }
+
+    /* Confirm Panel Overlay Styles */
+    .confirm-panel {
+      background: linear-gradient(135deg, #ffffff, #faf9ff);
+      border: 2px solid var(--accent);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(79, 70, 229, 0.15), var(--shadow-lg);
+      padding: 24px;
+      display: none;
+      animation: slideDown 0.3s ease;
+      border-left: 6px solid var(--accent);
+    }
+
+    .confirm-panel.show {
+      display: block;
+    }
+
+    .confirm-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--accent);
+    }
+
+    /* ─── Toast ─── */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      padding: 16px 28px;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+      z-index: 9999;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      background: #065f46;
+      color: #d1fae5;
+      border-left: 4px solid #10b981;
+    }
+
+    .toast.error {
+      background: #7f1d1d;
+      color: #fee2e2;
+      border-left: 4px solid #ef4444;
+    }
+
+    .toast.info {
+      background: var(--sidebar-bg);
+      color: #e2e8f0;
+      border-left: 4px solid var(--accent);
+    }
+
+    /* ─── Responsive ─── */
+    .mobile-header {
+      display: none;
+      background: var(--sidebar-bg);
+      color: #fff;
+      padding: 16px 20px;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .mobile-brand-name {
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.3px;
+    }
+
+    .mobile-brand-sub {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.45);
+      margin-top: 2px;
+    }
+
+    .mobile-nav-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: white;
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mobile-nav-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .platform-note-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+    }
+
+    .confirm-actions-row {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      align-items: center;
+      width: 100%;
+    }
+
+    .confirm-actions-row .btn-skip {
+      margin-right: auto;
+    }
+
+    @media (max-width: 1200px) {
+      .app-shell {
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+
+      body {
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+
+      .mobile-header {
+        display: flex;
+        width: 100%;
+      }
+
+      .main {
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
+        padding: 28px 20px;
+        gap: 28px;
+        overflow-x: hidden;
+      }
+
+      .top-bar {
+        align-items: flex-start;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .top-user-box {
+        width: 100%;
+        max-width: none;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .settings-banner {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .settings-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 992px) {
+      .workspace-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bottom-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #historyCard {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        border-radius: 0;
+      }
+
+      #detailCard {
+        border-radius: 0;
+      }
+    }
+
+    @media (max-width: 800px) {
+      .form-preview-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-column {
+        align-self: center;
+        width: 100%;
+      }
+
+      .preview-box {
+        width: 100%;
+        max-width: 320px;
+        height: 500px;
+        margin: 0 auto;
+      }
+
+      .preview-controls {
+        width: 100%;
+        max-width: 320px;
+        margin: 0 auto;
+      }
+
+      .confirm-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-actions-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .form-actions-row .btn {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .confirm-actions-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+
+      .confirm-actions-row .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .confirm-actions-row .btn-skip {
+        margin-right: 0 !important;
+        order: 3;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .main {
+        padding: 28px 16px;
+        gap: 24px;
+      }
+
+      .card {
+        padding: 24px 16px;
+        border-radius: 16px;
+      }
+
+      .top-bar .page-title {
+        font-size: 22px;
+      }
+
+      .top-bar .page-desc {
+        font-size: 12.5px;
+      }
+
+      .settings-banner {
+        padding: 20px 16px;
+        border-radius: 16px;
+      }
+
+      .settings-input-row {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .btn-settings {
+        width: 100%;
+      }
+
+      .platform-note-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-actions-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .form-actions-row .btn {
+        width: 100%;
+      }
+
+      .tab-bar {
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+      }
+
+      .tab-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      .queue-item {
+        padding: 10px 12px;
+        gap: 10px;
+      }
+
+      .queue-title {
+        font-size: 13px;
+      }
+
+      .toast {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        justify-content: center;
+        font-size: 12.5px;
+        padding: 12px 20px;
+        text-align: center;
+      }
+    }
+
+    /* Settings Tab Buttons & Content */
+    .settings-tab-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.65);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .settings-tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .settings-tab-btn.active {
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .settings-tab-btn .material-symbols-rounded {
+      font-size: 18px;
+    }
+
+    .settings-tab-content {
+      animation: fadeInSettings 0.25s ease-out;
+    }
+
+    @keyframes fadeInSettings {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ─── SPA Tab Switching & History CSS ─── */
+    .mobile-nav-tabs {
+      display: none;
+    }
+
+    @media (max-width: 1200px) {
+      .mobile-nav-tabs {
+        display: flex !important;
+        gap: 6px;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 6px;
+        box-shadow: var(--shadow);
+        margin-bottom: 16px;
+      }
+
+      .mobile-tab-btn {
+        flex: 1;
+        border: none;
+        background: transparent;
+        padding: 10px;
+        font-family: inherit;
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-radius: 10px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      .mobile-tab-btn.active {
+        background: var(--accent-light);
+        color: var(--accent);
+      }
+    }
+
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      position: relative;
+      min-height: 250px;
+    }
+
+    .history-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+
+    .history-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      border-color: var(--accent);
+    }
+
+    .history-card.lazada {
+      border-left: 4px solid #ffe4e6;
+    }
+
+    .history-card.shopee {
+      border-left: 4px solid #ffedd5;
+    }
+
+    .history-card.other {
+      border-left: 4px solid #f1f5f9;
+    }
+
+    .history-card:hover.lazada {
+      border-left-color: #e11d48;
+    }
+
+    .history-card:hover.shopee {
+      border-left-color: #ea580c;
+    }
+  </style>
+</head>
+
+<body class="login-mode">
+
+  <div class="login-screen" id="loginScreen">
+    <div class="login-panel">
+      <div class="login-logo-row">
+        <img class="brand-icon" src="S__300851276.jpg" alt="Logo" style="object-fit: cover;" />
+        <div>
+          <div class="login-title">AutoPost Pro</div>
+          <div class="login-subtitle">Sign in to continue #GODofAFF</div>
+        </div>
+      </div>
+
+      <div class="login-form">
+        <input id="loginPageEmail" class="login-input" placeholder="Email" autocomplete="email" />
+        <input id="loginPagePassword" class="login-input" type="password" placeholder="Password" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter') signInWithEmail('page')" />
+        <div id="loginPageError" class="login-error"></div>
+        <div class="login-actions">
+          <button class="btn btn-primary" onclick="signInWithEmail('page')" style="width:100%; justify-content:center;">
+            <span class="material-symbols-rounded" style="font-size:20px;">login</span>
+            Sign in
+          </button>
+        </div>
+        <div id="loginConfigNote" style="font-size:12px; color:var(--text-muted); line-height:1.45;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-shell" id="appShell">
+
+  <!-- Mobile Header -->
+  <header class="mobile-header">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <img class="brand-icon" src="S__300851276.jpg" alt="Logo"
+        style="width: 50px; height: 50px; border-radius: 12px; box-shadow: 0 3px 10px rgba(79, 70, 229, 0.3); object-fit: cover;" />
+      <div>
+        <div class="mobile-brand-name">AutoPost Pro #GODofAFF</div>
+        <div class="mobile-brand-sub">Affiliate Content Factory</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── Sidebar ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img class="brand-icon" src="S__300851276.jpg" alt="Logo" style="object-fit: cover;" />
+      <div>
+        <div class="brand-name">AutoPost Pro #GODofAFF</div>
+        <div class="brand-sub">Affiliate Content Factory</div>
+      </div>
+    </div>
+
+    <a class="nav-item active" href="#" id="nav-create" onclick="switchMainTab('create'); return false;">
+      <span class="material-symbols-rounded">add_circle</span>
+      สร้างโพสต์ใหม่
+    </a>
+
+    <a class="nav-item" href="#" id="nav-history" onclick="switchMainTab('history'); return false;">
+      <span class="material-symbols-rounded">history</span>
+      ประวัติการโพสต์
+    </a>
+
+    <div class="conn-status">
+      <span class="conn-dot offline" id="connDot"></span>
+      <span id="connText">ยังไม่ได้เชื่อมต่อ Worker</span>
+    </div>
+  </aside>
+
+  <!-- ─── Main Content ─── -->
+  <div class="main">
+
+    <div class="top-bar">
+      <div>
+        <div class="page-title">
+          <span class="material-symbols-rounded">bolt</span>
+          สร้างโพสต์ใหม่
+        </div>
+        <div class="page-desc">วางลิงก์คลิป TikTok หรือ Instagram Reels และลิงก์สินค้า
+          ระบบจะช่วยแกะวิดีโอและส่งไฟล์ดิบแชร์โพสต์ตรงเข้า n8n ให้คุณทันที!</div>
+      </div>
+      <div class="top-user-box" id="topUserBox">
+        <div class="top-user-avatar">
+          <img id="topUserPhoto" alt="" />
+          <span id="topUserInitial" class="material-symbols-rounded" style="font-size:20px;">person</span>
+        </div>
+        <div class="top-user-meta">
+          <div class="top-user-name" id="topUserName">User</div>
+          <div class="top-user-email" id="topUserEmail">-</div>
+        </div>
+        <button type="button" class="top-logout-btn" onclick="signOutFirebase()" title="Log out">
+          <span class="material-symbols-rounded" style="font-size:19px;">logout</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile SPA Navigation (visible under 1200px) -->
+    <div class="mobile-nav-tabs">
+      <button class="mobile-tab-btn active" id="mob-nav-create" onclick="switchMainTab('create')">
+        <span class="material-symbols-rounded">add_circle</span>
+        สร้างโพสต์ใหม่
+      </button>
+      <button class="mobile-tab-btn" id="mob-nav-history" onclick="switchMainTab('history')">
+        <span class="material-symbols-rounded">history</span>
+        ประวัติการโพสต์
+      </button>
+    </div>
+
+    <!-- CREATE WORKSPACE -->
+    <div id="createWorkspace">
+      <!-- Connection Settings Banner with Tabs -->
+      <div class="settings-banner" id="settingsBanner"
+        style="flex-direction: column; align-items: stretch; gap: 20px; padding: 20px 24px;">
+
+        <!-- Tab Header -->
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-bottom: 1px solid rgba(255, 255, 255, 0.15); padding-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="material-symbols-rounded"
+              style="font-size: 26px; color: #a5b4fc; flex-shrink: 0;">settings</span>
+            <span style="font-weight: 700; font-size: 15px; letter-spacing: -0.3px; color: #fff;">ตั้งค่าระบบ (System
+              Settings)</span>
+          </div>
+
+          <!-- Beautiful Glassmorphic Tab Selector -->
+          <div
+            style="display: flex; background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); flex-wrap: wrap; gap: 2px;">
+            <button class="settings-tab-btn active" data-tab="fbpages" onclick="switchSettingsTab('fbpages')">
+              <span class="material-symbols-rounded">pages</span>
+              Facebook Pages
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="settings-content-wrapper" style="width: 100%;">
+
+          <!-- Facebook Pages Manager -->
+          <div class="settings-tab-content" id="tab-fbpages">
+            <div style="font-weight: 700; font-size: 14px; letter-spacing: -0.3px; color: #fff;">Facebook Pages
+              Manager</div>
+            <div style="font-size: 11.5px; color: rgba(255,255,255,0.6); margin-top: 2px;">จัดการรายชื่อหน้าเพจ Facebook
+              สำหรับเลือกปลายทาง</div>
+            <div class="settings-input-row" style="display: flex; gap: 8px; margin-top: 12px; max-width: 980px; flex-wrap: wrap;">
+              <input id="fbPageNameInput" class="settings-input" style="flex: 1.2; padding: 10px 14px;"
+                placeholder="ชื่อเพจ เช่น เพจรีวิว" />
+              <input id="fbPageIdInput" class="settings-input" style="flex: 1; padding: 10px 14px;"
+                placeholder="Page ID" />
+              <select id="fbTokenSelect" class="settings-input" style="flex: 1; min-width: 150px; padding: 10px 14px; background: rgba(255, 255, 255, 0.08); color: #fff; border: 1px solid rgba(255, 255, 255, 0.15);" onchange="handleTokenSelectChange(this.value)">
+                <option value="" style="background: #1e1b4b; color: #fff;">-- พิมพ์เอง (Manual) --</option>
+              </select>
+              <input id="fbPageTokenInput" class="settings-input" style="flex: 1.8; padding: 10px 14px;"
+                placeholder="Page Access Token" />
+              <button class="btn-settings"
+                style="background:#10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); padding: 10px 16px;"
+                onclick="addFacebookPage()">เพิ่มเพจ</button>
+            </div>
+            <div style="margin-top: 8px;">
+              <button class="btn-settings"
+                style="background:#3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); padding: 8px 14px;"
+                onclick="syncDbData()">Sync Facebook Pages DB</button>
+            </div>
+            <div id="fbPagesList"
+              style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; max-height: 80px; overflow-y: auto;">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Workspace Grid -->
+      <div class="workspace-grid">
+
+        <!-- Unified Card: Form Inputs & Video Preview -->
+        <div class="card">
+          <div class="form-preview-grid">
+
+            <!-- Inputs Column -->
+            <div class="form-column">
+
+              <div class="input-group">
+                <label class="input-label">
+                  <span class="step">1</span>
+                  ลิงก์คลิป (TikTok / IG)
+                </label>
+                <div class="text-input-wrapper">
+                  <span class="material-symbols-rounded">link</span>
+                  <input id="tiktokUrl" class="text-input" placeholder="วางลิงก์คลิป https://vt.tiktok.com/..."
+                    onkeydown="if(event.key==='Enter') previewClip()" />
+                </div>
+              </div>
+
+              <div class="input-group">
+                <label class="input-label">
+                  <span class="step">2</span>
+                  ชื่อสินค้า
+                </label>
+                <div class="text-input-wrapper">
+                  <span class="material-symbols-rounded">shopping_bag</span>
+                  <input id="productName" class="text-input"
+                    placeholder="เช่น หูฟังบลูทูธไร้สาย HZB-25, เครื่องทำน้ำแข็ง..." />
+                </div>
+              </div>
+
+              <div class="input-group">
+                <label class="input-label">
+                  <span class="step">3</span>
+                  ลิงก์สินค้า Lazada / Shopee
+                </label>
+                <div class="text-input-wrapper">
+                  <span class="material-symbols-rounded">sell</span>
+                  <input id="productUrl" class="text-input" placeholder="วางลิงก์สินค้า เช่น https://s.lazada.co.th/..."
+                    oninput="autoDetectPlatform(this.value); scheduleProductImageScrape();" />
+                </div>
+
+                <!-- Product Image Preview -->
+                <div id="productImagePreview"
+                  style="display: none; align-items: center; gap: 12px; margin-top: 10px; padding: 10px 14px; background: rgba(0, 0, 0, 0.03); border-radius: var(--radius-sm); border: 1px dashed var(--border); animation: fadeInSettings 0.2s ease;">
+                  <div
+                    style="width: 44px; height: 44px; border-radius: 8px; overflow: hidden; background: #e2e8f0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border);">
+                    <img id="productPreviewImg" src="" style="width: 100%; height: 100%; object-fit: cover;" />
+                  </div>
+                  <div style="flex: 1; min-width: 0;">
+                    <p style="font-size: 11px; font-weight: 700; color: var(--text-muted);">รูปสินค้าชิ้นที่ 2
+                      (ดึงข้อมูลสำเร็จ)</p>
+                    <p id="productPreviewUrl"
+                      style="font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">
+                    </p>
+                  </div>
+                  <button type="button"
+                    style="border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;"
+                    onclick="clearProductImagePreview()" title="ลบรูปภาพ">
+                    <span class="material-symbols-rounded" style="font-size: 18px;">close</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Step 4: Choose Destination Facebook Page -->
+              <div class="input-group">
+                <label class="input-label">
+                  <span class="step">4</span>
+                  เลือก Facebook Page ปลายทาง
+                </label>
+                <div class="text-input-wrapper">
+                  <span class="material-symbols-rounded" style="color:var(--accent);">pages</span>
+                  <select id="fbPageSelector" class="select-input" style="padding-left: 46px;">
+                    <!-- จะเติมข้อมูลผ่าน JS -->
+                  </select>
+                </div>
+              </div>
+
+              <!-- Platform & Note Grid -->
+              <div class="platform-note-grid">
+                <div class="input-group">
+                  <label class="input-label">แพลตฟอร์ม</label>
+                  <div class="platform-selector">
+                    <button type="button" class="platform-btn" data-platform="lazada" onclick="setPlatform('lazada')">
+                      <span class="material-symbols-rounded" style="color:#e11d48;font-size:18px;">local_mall</span>
+                      Lazada
+                    </button>
+                    <button type="button" class="platform-btn" data-platform="shopee" onclick="setPlatform('shopee')">
+                      <span class="material-symbols-rounded" style="color:#ea580c;font-size:18px;">storefront</span>
+                      Shopee
+                    </button>
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label class="input-label">ข้อมูลเพิ่มเติม (แคมเปญ / โน้ต)</label>
+                  <input id="noteText" class="text-input" style="padding-left: 16px;"
+                    placeholder="โน้ต เช่น SubID, VF1471" />
+                </div>
+              </div>
+
+              <!-- Bottom Actions -->
+              <div class="form-actions-row">
+                <button id="postBtnDirect" class="btn"
+                  style="background: #1877f2; color: white; box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);"
+                  onclick="handleDirectAction('post')">
+                  <span class="material-symbols-rounded" style="font-size: 20px;">share</span>
+                  โพสต์ทันที (Post)
+                </button>
+
+                <button id="fetchBtn" class="btn btn-secondary" onclick="previewClip()">
+                  <span class="material-symbols-rounded" style="font-size: 20px;">visibility</span>
+                  พรีวิวดูคลิป
+                </button>
+
+                <button class="btn btn-outline" onclick="clearAll()" title="ล้างข้อมูลทั้งหมด">
+                  <span class="material-symbols-rounded" style="font-size: 20px;">delete_sweep</span>
+                  ล้างข้อมูล
+                </button>
+              </div>
+
+            </div>
+
+            <!-- Video Preview Column -->
+            <div class="preview-column">
+              <div class="card-title" style="margin-bottom: 12px; align-self: flex-start;">
+                <span class="material-symbols-rounded" style="color:var(--accent);">smart_display</span>
+                ตัวอย่างคลิป
+              </div>
+
+              <div class="preview-box" id="previewBox">
+                <div class="preview-placeholder">
+                  <span class="material-symbols-rounded">movie</span>
+                  <p>ยังไม่มีคลิปที่ดึง<br />วางลิงก์แล้วกด <strong>ดึงคลิปดูก่อน</strong></p>
+                </div>
+              </div>
+
+              <div class="preview-controls">
+                <button class="btn btn-outline btn-sm" onclick="downloadMp4()" style="flex: 1;">
+                  <span class="material-symbols-rounded" style="font-size:18px;">download</span>
+                  ดาวน์โหลด
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="copyVideoUrl()" style="flex: 1;">
+                  <span class="material-symbols-rounded" style="font-size:18px;">content_copy</span>
+                  คัดลอก URL
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- History Card below the Form (New addition!) -->
+      <div class="card" style="margin-top: 24px;">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+          <div class="card-title" style="margin-bottom: 0;">
+            <span class="material-symbols-rounded" style="color: var(--accent);">history</span>
+            ประวัติการโพสต์ล่าสุด (Recent History)
+          </div>
+          <button class="btn btn-outline btn-xs" onclick="switchMainTab('history')"
+            style="padding: 6px 12px; font-weight: 700; font-size: 12.5px; display: inline-flex; align-items: center; gap: 4px; border-radius: 8px; font-family: inherit;">
+            ดูประวัติทั้งหมด
+            <span class="material-symbols-rounded" style="font-size: 16px;">arrow_forward</span>
+          </button>
+        </div>
+
+        <!-- Live History Grid below the Form -->
+        <div id="recentHistoryGrid" class="history-grid"
+          style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+          <!-- Will be rendered dynamically via JS -->
+        </div>
+      </div>
+
+    </div> <!-- END CREATE WORKSPACE -->
+
+    <!-- HISTORY WORKSPACE -->
+    <div id="historyWorkspace" style="display: none;">
+      <div class="card" style="padding: 24px;">
+
+        <!-- Filter and Search Header -->
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+          <!-- Left: Search Box -->
+          <div class="text-input-wrapper" style="flex: 1; max-width: 400px; min-width: 250px;">
+            <span class="material-symbols-rounded" style="color: var(--text-muted);">search</span>
+            <input id="historySearchInput" class="text-input" style="padding-left: 46px;"
+              placeholder="ค้นหาชื่อสินค้า, แคปชัน, โน้ต..." oninput="filterHistory()" />
+          </div>
+
+          <!-- Middle: Platform Select Pills -->
+          <div
+            style="display: flex; background: #f1f5f9; padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--border); gap: 2px;">
+            <button class="tab-btn active" id="history-filter-all" onclick="setHistoryFilter('all')"
+              style="padding: 8px 16px; border-radius: 8px;">ทั้งหมด</button>
+            <button class="tab-btn" id="history-filter-lazada" onclick="setHistoryFilter('lazada')"
+              style="padding: 8px 16px; border-radius: 8px;">Lazada</button>
+            <button class="tab-btn" id="history-filter-shopee" onclick="setHistoryFilter('shopee')"
+              style="padding: 8px 16px; border-radius: 8px;">Shopee</button>
+          </div>
+
+          <!-- Right: Sync Button -->
+          <button class="btn btn-primary" onclick="syncDbData()"
+            style="padding: 10px 18px; font-size: 13.5px; border-radius: var(--radius-sm); height: 44px; display: inline-flex; align-items: center; gap: 8px;">
+            <span class="material-symbols-rounded" id="syncSpinnerIcon">sync</span>
+            ดึงข้อมูลล่าสุด
+          </button>
+        </div>
+
+        <!-- History Items Grid -->
+        <div id="historyItemsGrid" class="history-grid">
+          <!-- Will be rendered dynamically via JS -->
+        </div>
+
+      </div>
+    </div>
+
+
+  </div>
+
+  </div>
+
+  <!-- Toast Message Element -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ═══════════════════════════════════════════
+    // STATE & CONFIG
+    // ═══════════════════════════════════════════
+    // Hardcode endpoints here before delivering to each customer.
+    const WORKER_BASE_URL = 'https://kaneskn-worker.kaneskn999.workers.dev/';
+    const N8N_WEBHOOK_URL = 'https://n8n-9ych.srv1728018.hstgr.cloud/webhook/273e7d20-ebd4-4067-9d80-90eb34b1b900';
+    let workerBaseUrl = WORKER_BASE_URL.replace(/\/+$/, '');
+    let previewData = null;       // Cached preview response metadata
+    let activePlatform = 'lazada'; // Selected platform for new clip
+    let todayFetchCount = parseInt(localStorage.getItem('todayFetchCount') || '0');
+    const todayKey = new Date().toISOString().split('T')[0];
+    let fbPages = [];
+    let scrapedProductImageUrl = '';
+    let productImageScrapeTimer = null;
+    let scrapedProductImageUrls = [];
+    let firebaseAuth = null;
+    let currentFirebaseUser = null;
+    let lastSyncedUserId = '';
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAzSHHw4_eXq5M0o6cKDRfO8SxGfi9qY9I",
+      authDomain: "postface-90b09.firebaseapp.com",
+    projectId: "postface-90b09",
+    storageBucket: "postface-90b09.firebasestorage.app",
+    messagingSenderId: "1030979365994",
+    appId: "1:1030979365994:web:fd5570afbbf898617eae13",
+    measurementId: "G-MRM5XG7XKW"
+    };
+
+    // SPA and History State
+    let postHistory = [];        // Cached post history items from DB
+    let historyFilter = 'all';   // 'all', 'lazada', 'shopee'
+    let currentMainTab = 'create'; // 'create', 'history'
+
+    // Load saved Facebook pages
+    try {
+      fbPages = JSON.parse(localStorage.getItem('fbPages') || '[]');
+    } catch (e) {
+      fbPages = [];
+    }
+
+    // Reset daily count if date has changed
+    if (localStorage.getItem('todayKey') !== todayKey) {
+      todayFetchCount = 0;
+      localStorage.setItem('todayKey', todayKey);
+      localStorage.setItem('todayFetchCount', '0');
+    }
+
+    function getWorkerBaseUrl() {
+      return (workerBaseUrl || WORKER_BASE_URL || '').replace(/\/+$/, '');
+    }
+
+    function hasFirebaseConfig(config = FIREBASE_CONFIG) {
+      return Boolean(
+        config.apiKey && config.authDomain && config.projectId && config.appId &&
+        !config.apiKey.includes('PASTE_') &&
+        !config.authDomain.includes('PASTE_') &&
+        !config.projectId.includes('PASTE_') &&
+        !config.appId.includes('PASTE_')
+      );
+    }
+
+    function renderAuthStatus() {
+      updateLoginGate();
+      updateTopUserBox();
+    }
+
+    function updateTopUserBox() {
+      const nameEl = document.getElementById('topUserName');
+      const emailEl = document.getElementById('topUserEmail');
+      const photoEl = document.getElementById('topUserPhoto');
+      const initialEl = document.getElementById('topUserInitial');
+      if (!nameEl || !emailEl) return;
+
+      if (!currentFirebaseUser) {
+        nameEl.textContent = 'User';
+        emailEl.textContent = '-';
+        if (photoEl) {
+          photoEl.removeAttribute('src');
+          photoEl.style.display = 'none';
+        }
+        if (initialEl) {
+          initialEl.textContent = 'person';
+          initialEl.style.display = 'inline-flex';
+        }
+        return;
+      }
+
+      const displayName = currentFirebaseUser.displayName || currentFirebaseUser.email || currentFirebaseUser.uid;
+      nameEl.textContent = displayName;
+      emailEl.textContent = currentFirebaseUser.email || currentFirebaseUser.uid;
+
+      if (photoEl && currentFirebaseUser.photoURL) {
+        photoEl.src = currentFirebaseUser.photoURL;
+        photoEl.style.display = 'block';
+        if (initialEl) initialEl.style.display = 'none';
+      } else {
+        if (photoEl) {
+          photoEl.removeAttribute('src');
+          photoEl.style.display = 'none';
+        }
+        if (initialEl) {
+          initialEl.textContent = (displayName || 'U').slice(0, 1).toUpperCase();
+          initialEl.style.display = 'inline-flex';
+        }
+      }
+    }
+
+    function showLoginError(message) {
+      const el = document.getElementById('loginPageError');
+      if (!el) return;
+      if (!message) {
+        el.style.display = 'none';
+        el.textContent = '';
+        return;
+      }
+      el.textContent = message;
+      el.style.display = 'block';
+    }
+
+    function updateLoginGate() {
+      const note = document.getElementById('loginConfigNote');
+      if (note) {
+        note.textContent = hasFirebaseConfig()
+          ? '#GODofAFF'
+          : 'Firebase config still has placeholder values. Update FIREBASE_CONFIG in the HTML file first.';
+      }
+
+      if (!hasFirebaseConfig()) {
+        document.body.classList.add('login-mode');
+        return;
+      }
+
+      document.body.classList.toggle('login-mode', !currentFirebaseUser);
+      if (currentFirebaseUser) {
+        showLoginError('');
+      }
+    }
+
+    function initFirebaseAuth() {
+      const config = FIREBASE_CONFIG;
+      if (!hasFirebaseConfig(config)) {
+        renderAuthStatus();
+        return;
+      }
+
+      if (!window.firebase || !firebase.initializeApp) {
+        showToast('Firebase SDK not loaded yet. Please refresh if login is needed.', 'error');
+        renderAuthStatus();
+        return;
+      }
+
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(config);
+        }
+        firebaseAuth = firebase.auth();
+        firebaseAuth.onAuthStateChanged((user) => {
+          currentFirebaseUser = user || null;
+          renderAuthStatus();
+          if (currentFirebaseUser && lastSyncedUserId !== currentFirebaseUser.uid) {
+            lastSyncedUserId = currentFirebaseUser.uid;
+            syncDbData();
+          }
+        });
+      } catch (err) {
+        console.error('Firebase init failed:', err);
+        showToast('Firebase init failed: ' + (err.message || err), 'error');
+        renderAuthStatus();
+      }
+    }
+
+    async function signInWithEmail(source = 'page') {
+      if (!firebaseAuth) {
+        initFirebaseAuth();
+      }
+      if (!firebaseAuth) {
+        const msg = 'Please update FIREBASE_CONFIG in the HTML file first.';
+        showLoginError(msg);
+        showToast(msg, 'error');
+        return;
+      }
+
+      const email = document.getElementById('loginPageEmail')?.value?.trim() || '';
+      const password = document.getElementById('loginPagePassword')?.value || '';
+      if (!email || !password) {
+        const msg = 'Please enter email and password.';
+        showLoginError(msg);
+        showToast(msg, 'error');
+        return;
+      }
+
+      try {
+        showLoginError('');
+        await firebaseAuth.signInWithEmailAndPassword(email, password);
+        showToast('Login success.', 'success');
+      } catch (err) {
+        console.error('Email sign in failed:', err);
+        showLoginError(err.message || String(err));
+        showToast('Email login failed: ' + (err.message || err), 'error');
+      }
+    }
+
+    async function signOutFirebase() {
+      if (!firebaseAuth) return;
+      await firebaseAuth.signOut();
+      showToast('Signed out.', 'info');
+    }
+
+    async function getWebhookUserMeta() {
+      if (!currentFirebaseUser) return null;
+
+      let idToken = '';
+      try {
+        idToken = await currentFirebaseUser.getIdToken();
+      } catch (err) {
+        console.warn('Could not get Firebase ID token:', err);
+      }
+
+      return {
+        uid: currentFirebaseUser.uid,
+        email: currentFirebaseUser.email || '',
+        displayName: currentFirebaseUser.displayName || '',
+        photoURL: currentFirebaseUser.photoURL || '',
+        providerId: currentFirebaseUser.providerData?.[0]?.providerId || '',
+        idToken,
+        loggedInAt: new Date().toISOString()
+      };
+    }
+
+    async function requireLoginIfConfigured() {
+      if (!hasFirebaseConfig()) return true;
+      if (currentFirebaseUser) return true;
+      showToast('Please login before sending webhook.', 'error');
+      document.body.classList.add('login-mode');
+      return false;
+    }
+
+    // ═══════════════════════════════════════════
+    // INITIALIZATION
+    // ═══════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+      initFirebaseAuth();
+
+      // Update today count badge
+      const badgeEl = document.getElementById('todayCountBadge');
+      if (badgeEl) {
+        badgeEl.textContent = `วันนี้: ${todayFetchCount}`;
+      }
+
+      // Default active platform btn styling
+      setPlatform('lazada');
+
+      if (workerBaseUrl) {
+        checkConnection();
+      } else {
+        setConnectionStatus(false);
+      }
+
+      // Load Facebook Pages
+      renderFbPages();
+
+      // Register Product URL Scraper Event Listeners
+      const prodUrlEl = document.getElementById('productUrl');
+      if (prodUrlEl) {
+        prodUrlEl.addEventListener('blur', () => scrapeProductImage());
+        prodUrlEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') scrapeProductImage();
+        });
+      }
+    });
+
+    // ═══════════════════════════════════════════
+    // CONNECTION CHECKS
+    // ═══════════════════════════════════════════
+    async function saveWorkerUrl() {
+      const url = getWorkerBaseUrl();
+      if (!url) {
+        showToast('Worker URL is not configured in WORKER_BASE_URL.', 'error');
+        return;
+      }
+      workerBaseUrl = url;
+      await checkConnection();
+    }
+
+    async function checkConnection() {
+      try {
+        const baseUrl = getWorkerBaseUrl();
+        if (!baseUrl) throw new Error('Missing Worker URL');
+        workerBaseUrl = baseUrl;
+        const res = await fetch(`${baseUrl}/api/health`, { method: 'GET' });
+        if (res.ok) {
+          setConnectionStatus(true);
+          showToast('เชื่อมต่อ Cloudflare Worker เรียบร้อย!', 'success');
+        } else {
+          throw new Error(`สถานะเซิร์ฟเวอร์ ${res.status}`);
+        }
+      } catch (err) {
+        setConnectionStatus(false);
+        showToast('การเชื่อมต่อกับ Worker ล้มเหลว: ' + err.message, 'error');
+      }
+    }
+
+    function setConnectionStatus(online) {
+      const dot = document.getElementById('connDot');
+      const text = document.getElementById('connText');
+      if (online) {
+        dot.className = 'conn-dot online';
+        text.textContent = 'เชื่อมต่อสำเร็จ';
+      } else {
+        dot.className = 'conn-dot offline';
+        text.textContent = 'ยังไม่ได้เชื่อมต่อ Worker';
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    // FORM CONTROL ACTIONS
+    // ═══════════════════════════════════════════
+    function setPlatform(platform) {
+      activePlatform = platform;
+      document.querySelectorAll('.platform-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-platform') === platform) {
+          btn.classList.add('active');
+        }
+      });
+    }
+
+    function autoDetectPlatform(url) {
+      const u = url.toLowerCase();
+      if (u.includes('lazada') || u.includes('s.lazada')) {
+        setPlatform('lazada');
+      } else if (u.includes('shopee') || u.includes('shp.ee')) {
+        setPlatform('shopee');
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    // FETCH & PREVIEW SYSTEM
+    // ═══════════════════════════════════════════
+    async function previewClip() {
+      if (!workerBaseUrl) {
+        showToast('Worker URL is not configured in WORKER_BASE_URL.', 'error');
+        return;
+      }
+
+      const tiktokUrl = document.getElementById('tiktokUrl').value.trim();
+      if (!tiktokUrl) {
+        showToast('กรุณากรอกลิงก์คลิปวิดีโอ TikTok / IG', 'error');
+        document.getElementById('tiktokUrl').focus();
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const res = await fetch(`${workerBaseUrl}/api/preview`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tiktokUrl })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || `HTTP Error ${res.status}`);
+        }
+
+        previewData = data.preview;
+
+        // Render Quick Video Preview Player inside workspace (HTML video can stream direct CDN URL)
+        document.getElementById('previewBox').innerHTML = `
+          <span class="status-badge preview">
+            <span class="material-symbols-rounded" style="font-size:14px;">visibility</span>
+            ตัวอย่างคลิป
+          </span>
+          <video controls playsinline autoplay muted src="${previewData.videoUrl}"></video>
+        `;
+
+        showToast('ดึงตัวอย่างสำเร็จ! ตรวจสอบแล้วกดโพสต์ส่ง n8n ได้เลย', 'info');
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('previewBox').innerHTML = `
+          <div class="preview-placeholder">
+            <span class="material-symbols-rounded" style="color:var(--red);">error</span>
+            <p style="color:#ef4444;font-weight:700;">ดึงข้อมูลล้มเหลว</p>
+            <p style="margin-top:6px;font-size:11px;color:#888;">${err.message}</p>
+          </div>
+        `;
+        showToast('ไม่สามารถดึงข้อมูลคลิปได้: ' + err.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    // n8n Webhook Settings
+    // ═══════════════════════════════════════════
+    function saveWebhookUrl() {
+      showToast('Webhook URL is hardcoded in N8N_WEBHOOK_URL.', 'info');
+    }
+
+    async function triggerWebhook(url, payload) {
+      try {
+        const userMeta = await getWebhookUserMeta();
+        const enrichedPayload = {
+          ...payload,
+          loginUser: userMeta,
+          userId: userMeta?.uid || '',
+          userEmail: userMeta?.email || '',
+          userName: userMeta?.displayName || ''
+        };
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(enrichedPayload)
+        });
+        if (!res.ok) {
+          throw new Error(`Webhook HTTP Error ${res.status}`);
+        }
+      } catch (err) {
+        console.error("Webhook trigger failed:", err);
+        showToast("ส่งสัญญาณ Webhook ล้มเหลว: " + err.message, "error");
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    // DIRECT ASYNC TO WEBHOOK FLOW (R2-LESS)
+    // ═══════════════════════════════════════════
+    async function handleDirectAction(actionType) {
+      if (!workerBaseUrl) {
+        showToast('Worker URL is not configured in WORKER_BASE_URL.', 'error');
+        return;
+      }
+
+      const webhookUrl = (N8N_WEBHOOK_URL || '').trim();
+      if (!(await requireLoginIfConfigured())) {
+        return;
+      }
+      if (!webhookUrl) {
+        showToast('Webhook URL is not configured in N8N_WEBHOOK_URL.', 'error');
+        return;
+      }
+
+      const tiktokUrl = document.getElementById('tiktokUrl').value.trim();
+      if (!tiktokUrl) {
+        showToast('กรุณากรอกลิงก์คลิปวิดีโอ TikTok / IG', 'error');
+        document.getElementById('tiktokUrl').focus();
+        return;
+      }
+
+      const productName = document.getElementById('productName').value.trim();
+      const productUrl = document.getElementById('productUrl').value.trim();
+      const noteText = document.getElementById('noteText').value.trim();
+      const platform = activePlatform;
+      const productImageUrl = scrapedProductImageUrl;
+      const userMeta = await getWebhookUserMeta();
+
+      // 1. Clear form fields immediately to let the user paste the next URL right away!
+      document.getElementById('tiktokUrl').value = '';
+      document.getElementById('productName').value = '';
+      document.getElementById('productUrl').value = '';
+      document.getElementById('noteText').value = '';
+      clearProductImagePreview();
+
+      // 2. Show a loading status in the preview box
+      document.getElementById('previewBox').innerHTML = `
+        <div class="loading-overlay" style="background: rgba(15, 23, 42, 0.95);">
+          <div class="spinner"></div>
+          <p style="color:#a5b4fc; font-weight:700;">[ระบบเบื้องหลัง]</p>
+          <p style="font-size:12px; margin-top:4px; line-height:1.5; text-align:center;">กำลังดึงคลิป, ดาวน์โหลด Binary<br/>และยิง Webhook ตรงเข้า n8n...<br/><strong>คุณสามารถป้อนข้อมูลอันถัดไปได้ทันที!</strong></p>
+        </div>
+      `;
+
+      showToast('[ระบบเบื้องหลัง] เริ่มทำงานและจัดส่งสัญญาณโพสต์แล้ว...', 'info');
+
+      // 3. Run CDN fetch, binary proxy download, and n8n webhook upload in the background (Asynchronously)
+      (async () => {
+        try {
+          // A) Fetch preview data from Worker to get direct CDN URL and metadata
+          const previewRes = await fetch(`${workerBaseUrl}/api/preview`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tiktokUrl })
+          });
+
+          const previewJson = await previewRes.json();
+          if (!previewRes.ok || !previewJson.success) {
+            throw new Error(previewJson.error || `HTTP Preview Error ${previewRes.status}`);
+          }
+
+          const preview = previewJson.preview;
+          const cdnVideoUrl = preview.videoUrl;
+          const originalTitle = preview.title || '';
+
+          // B) Download video binary blob from Worker CORS-enabled Proxy endpoint
+          const proxyUrl = `${workerBaseUrl}/api/proxy-video?url=${encodeURIComponent(cdnVideoUrl)}`;
+          const videoRes = await fetch(proxyUrl);
+          if (!videoRes.ok) {
+            throw new Error(`Proxy ดาวน์โหลดวิดีโอล้มเหลว: ${videoRes.status}`);
+          }
+
+          const videoBlob = await videoRes.blob();
+
+          // C) Prepare FormData for n8n Webhook direct upload
+          const formData = new FormData();
+          formData.append('video', videoBlob, `${Date.now()}_video.mp4`);
+          formData.append('action', actionType); // 'post' or 'queue'
+          formData.append('productName', productName);
+          formData.append('productUrl', productUrl);
+          formData.append('platform', platform);
+          formData.append('note', noteText);
+          formData.append('tiktokUrl', tiktokUrl);
+          formData.append('title', originalTitle);
+          formData.append('userId', userMeta?.uid || '');
+          formData.append('userEmail', userMeta?.email || '');
+          formData.append('userName', userMeta?.displayName || '');
+          formData.append('userPhotoURL', userMeta?.photoURL || '');
+          formData.append('userProviderId', userMeta?.providerId || '');
+          formData.append('firebaseIdToken', userMeta?.idToken || '');
+          formData.append('loginUser', JSON.stringify(userMeta || null));
+
+          // Append destination Facebook Page info
+          const fbPageSelector = document.getElementById('fbPageSelector');
+          const fbPageId = fbPageSelector ? fbPageSelector.value : '';
+          const fbPageOption = fbPageSelector ? fbPageSelector.selectedOptions[0] : null;
+          const fbPageIndex = fbPageOption ? Number(fbPageOption.dataset.pageIndex) : -1;
+          const selectedFbPage = Number.isInteger(fbPageIndex) && fbPageIndex >= 0 ? fbPages[fbPageIndex] : null;
+          const fbPageName = (fbPageOption && fbPageId) ? fbPageOption.text.replace(/\s*\([^)]*\)$/, '') : '';
+          const fbPageToken = selectedFbPage?.token || '';
+          formData.append('fbPageId', fbPageId);
+          formData.append('fbPageName', fbPageName);
+          formData.append('fbPageToken', fbPageToken);
+          formData.append('pageToken', fbPageToken);
+          formData.append('fbPage', JSON.stringify(selectedFbPage || null));
+
+          // Append destination product image URL
+          formData.append('productImageUrl', productImageUrl);
+
+          // D) POST to n8n Webhook URL (multipart/form-data)
+          const n8nRes = await fetch(webhookUrl, {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!n8nRes.ok) {
+            throw new Error(`ส่งเข้า n8n Webhook ล้มเหลว HTTP Status ${n8nRes.status}`);
+          }
+
+          // Update daily counter
+          todayFetchCount++;
+          localStorage.setItem('todayFetchCount', todayFetchCount.toString());
+          const badgeEl = document.getElementById('todayCountBadge');
+          if (badgeEl) {
+            badgeEl.textContent = `วันนี้: ${todayFetchCount}`;
+          }
+
+          showToast('จัดส่งไฟล์ Binary ไป n8n สำเร็จ!', 'success');
+
+          // Create local URL for video player preview
+          const localBlobUrl = URL.createObjectURL(videoBlob);
+          previewData = { videoUrl: localBlobUrl };
+
+          // Update preview box to local Blob URL so they can watch it!
+          document.getElementById('previewBox').innerHTML = `
+            <span class="status-badge saved" style="background:#8b5cf6;">
+              <span class="material-symbols-rounded" style="font-size:14px;">send</span>
+              ส่งเข้า n8n แล้ว
+            </span>
+            <video controls playsinline src="${localBlobUrl}"></video>
+          `;
+
+        } catch (err) {
+          console.error("Background task error:", err);
+          showToast('การทำงานเบื้องหลังล้มเหลว: ' + err.message, 'error');
+
+          // Reset preview box to error placeholder
+          document.getElementById('previewBox').innerHTML = `
+            <div class="preview-placeholder">
+              <span class="material-symbols-rounded" style="color:var(--red);">error</span>
+              <p style="color:#ef4444; font-weight:700;">ดาวน์โหลดเบื้องหลังล้มเหลว</p>
+              <p style="margin-top:6px; font-size:11px; color:#888;">${err.message}</p>
+            </div>
+          `;
+        }
+      })();
+    }
+
+    // ═══════════════════════════════════════════
+    // ACTION CONTROLLER HELPERS
+    // ═══════════════════════════════════════════
+    async function copyVideoUrl() {
+      if (!previewData || !previewData.videoUrl) {
+        showToast('ไม่มี URL คลิปให้คัดลอก กรุณาเลือกหรือดึงคลิปก่อน', 'error');
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(previewData.videoUrl);
+        showToast('คัดลอกสตรีมลิงก์วิดีโอสำเร็จ!', 'success');
+      } catch {
+        showToast('ไม่สามารถคัดลอก URL ได้', 'error');
+      }
+    }
+
+    function downloadMp4() {
+      if (!previewData || !previewData.videoUrl) {
+        showToast('ไม่มีคลิปสำหรับดาวน์โหลด', 'error');
+        return;
+      }
+      window.open(previewData.videoUrl, '_blank');
+    }
+
+    function clearAll() {
+      document.getElementById('tiktokUrl').value = '';
+      document.getElementById('productName').value = '';
+      document.getElementById('productUrl').value = '';
+      document.getElementById('noteText').value = '';
+      clearPreview();
+      clearProductImagePreview();
+      showToast('ล้างแบบฟอร์มข้อมูลทั้งหมดแล้ว', 'info');
+    }
+
+    function clearPreview() {
+      previewData = null;
+      document.getElementById('previewBox').innerHTML = `
+        <div class="preview-placeholder">
+          <span class="material-symbols-rounded">movie</span>
+          <p>ยังไม่มีคลิปที่ดึง<br/>วางลิงก์แล้วกด <strong>พรีวิวดูคลิป</strong></p>
+        </div>
+      `;
+    }
+
+    // ═══════════════════════════════════════════
+    // FORMATTERS & SMALL UTILS
+    // ═══════════════════════════════════════════
+    function setLoading(isLoading) {
+      const btn = document.getElementById('fetchBtn');
+      btn.disabled = isLoading;
+      btn.innerHTML = isLoading
+        ? '<span class="material-symbols-rounded" style="font-size:20px;animation:spin 0.8s linear infinite;">progress_activity</span> กำลังดึงคลิป...'
+        : '<span class="material-symbols-rounded" style="font-size: 20px;">visibility</span> พรีวิวดูคลิป';
+
+      if (isLoading) {
+        document.getElementById('previewBox').innerHTML = `
+          <div class="loading-overlay">
+            <div class="spinner"></div>
+            <p>ระบบกำลังเรียกและแกะตัวอย่างวิดีโอจาก CDN ชั่วคราว...</p>
+          </div>
+        `;
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+      clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    // ═══════════════════════════════════════════
+    // FACEBOOK PAGES MANAGEMENT
+    // ═══════════════════════════════════════════
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    async function syncFacebookPagesToWebhook(eventType, page) {
+      const webhookUrl = (N8N_WEBHOOK_URL || '').trim();
+      if (!webhookUrl) {
+        showToast('Webhook URL is not configured in N8N_WEBHOOK_URL. Facebook Page saved locally only.', 'info');
+        return;
+      }
+
+      await triggerWebhook(webhookUrl, {
+        action: 'facebook_pages_sync',
+        eventType,
+        page,
+        dbPage: page ? { namePage: page.name, idPage: page.id, tokenPage: page.token || '', pageToken: page.token || '' } : null,
+        pages: fbPages,
+        dbPages: fbPages.map(p => ({ namePage: p.name, idPage: p.id, tokenPage: p.token || '', pageToken: p.token || '' })),
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    function normalizeFacebookPagesFromDb(data) {
+      const rows = Array.isArray(data) ? data : (Array.isArray(data.pages) ? data.pages : (Array.isArray(data.data) ? data.data : []));
+      return rows
+        .map(row => ({
+          name: String(row.name || row.namePage || row.pageName || '').trim(),
+          id: String(row.idPage || row.pageId || row.fbPageId || row.id || '').trim(),
+          token: String(row.token || row.pageToken || row.tokenPage || row.accessToken || row.fbPageToken || '').trim()
+        }))
+        .filter(page => page.name && page.id);
+    }
+
+    async function loadFacebookPagesFromWebhook() {
+      const webhookUrl = (N8N_WEBHOOK_URL || '').trim();
+      if (!webhookUrl) {
+        showToast('Webhook URL is not configured in N8N_WEBHOOK_URL.', 'error');
+        return;
+      }
+
+      try {
+        const userMeta = await getWebhookUserMeta();
+        const res = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'facebook_pages_list',
+            loginUser: userMeta,
+            userId: userMeta?.uid || '',
+            userEmail: userMeta?.email || '',
+            userName: userMeta?.displayName || '',
+            timestamp: new Date().toISOString()
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `Webhook HTTP ${res.status}`);
+
+        const pages = normalizeFacebookPagesFromDb(data);
+        if (pages.length === 0) throw new Error('Webhook returned no Facebook Pages');
+
+        fbPages = pages;
+        localStorage.setItem('fbPages', JSON.stringify(fbPages));
+        renderFbPages();
+        showToast(`Loaded ${pages.length} Facebook Page(s) from DB`, 'success');
+      } catch (err) {
+        console.error('Failed to load Facebook Pages DB:', err);
+        showToast('Load Facebook Pages DB failed: ' + (err.message || err), 'error');
+      }
+    }
+
+    function renderFbPages() {
+      const listEl = document.getElementById('fbPagesList');
+      const selectorEl = document.getElementById('fbPageSelector');
+
+      if (!listEl || !selectorEl) return;
+
+      // Render saved pages tags in Settings
+      if (fbPages.length === 0) {
+        listEl.innerHTML = '<span style="font-size: 11px; color: rgba(255,255,255,0.4); font-style: italic;">ยังไม่มีเพจที่บันทึก</span>';
+      } else {
+        listEl.innerHTML = fbPages.map((page, idx) => `
+          <span style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 4px 10px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; color: #fff;">
+            <span style="max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${page.name}</span>
+            <span style="color: rgba(255,255,255,0.5); font-size: 9px;">(${page.id})</span>
+            <span style="color:${page.token ? '#86efac' : '#fca5a5'}; font-size: 9px; font-weight:700;">${page.token ? 'Token' : 'No token'}</span>
+            <button style="border: none; background: transparent; color: #fca5a5; cursor: pointer; font-size: 14px; font-weight: bold; padding: 0 2px;" onclick="deleteFacebookPage(${idx})" title="ลบเพจ">&times;</button>
+          </span>
+        `).join('');
+      }
+
+      // Render selector options in Step 4 dropdown
+      if (fbPages.length === 0) {
+        selectorEl.innerHTML = '<option value="">-- ไม่ระบุเพจ (โพสต์ทั่วไป) --</option>';
+      } else {
+        selectorEl.innerHTML = `
+          <option value="">-- ไม่ระบุเพจ (โพสต์ทั่วไป) --</option>
+          ${fbPages.map((page, idx) => `<option value="${page.id}" data-page-index="${idx}">${page.name} (${page.id})</option>`).join('')}
+        `;
+      }
+
+      // Render select options for Page Access Token reuse
+      const tokenSelectEl = document.getElementById('fbTokenSelect');
+      if (tokenSelectEl) {
+        const uniqueTokensMap = new Map();
+        fbPages.forEach(p => {
+          if (p.token && !uniqueTokensMap.has(p.token)) {
+            uniqueTokensMap.set(p.token, `${p.name} (${p.id.slice(-4)})`);
+          }
+        });
+
+        let optionsHtml = '<option value="" style="background: #1e1b4b; color: #fff;">-- พิมพ์เอง (Manual) --</option>';
+        uniqueTokensMap.forEach((label, token) => {
+          optionsHtml += `<option value="${escapeHtml(token)}" style="background: #1e1b4b; color: #fff;">ใช้ของ: ${escapeHtml(label)}</option>`;
+        });
+        tokenSelectEl.innerHTML = optionsHtml;
+      }
+    }
+
+    function handleTokenSelectChange(val) {
+      const tokenInput = document.getElementById('fbPageTokenInput');
+      if (tokenInput) {
+        tokenInput.value = val;
+      }
+    }
+
+    function addFacebookPage() {
+      const nameInput = document.getElementById('fbPageNameInput');
+      const idInput = document.getElementById('fbPageIdInput');
+      const tokenInput = document.getElementById('fbPageTokenInput');
+
+      if (!nameInput || !idInput || !tokenInput) return;
+
+      const name = nameInput.value.trim();
+      const id = idInput.value.trim();
+      const token = tokenInput.value.trim();
+
+      if (!name || !id || !token) {
+        showToast('กรุณากรอกชื่อเพจ, Page ID และ Page Access Token', 'error');
+        return;
+      }
+
+      if (fbPages.some(p => p.id === id)) {
+        showToast('มีเพจที่มี ID นี้ลงทะเบียนไว้แล้ว', 'error');
+        return;
+      }
+
+      const page = { name, id, token };
+      fbPages.push(page);
+      localStorage.setItem('fbPages', JSON.stringify(fbPages));
+
+      nameInput.value = '';
+      idInput.value = '';
+      // We do not clear the token input so that the user can immediately add another page with the same token!
+      syncFacebookPagesToWebhook('add', page);
+
+      renderFbPages();
+      showToast(`เพิ่มเพจ "${name}" สำเร็จ!`, 'success');
+    }
+
+    function deleteFacebookPage(index) {
+      if (index < 0 || index >= fbPages.length) return;
+      const removedPage = fbPages[index];
+      const removedName = removedPage.name;
+      fbPages.splice(index, 1);
+      localStorage.setItem('fbPages', JSON.stringify(fbPages));
+      syncFacebookPagesToWebhook('delete', removedPage);
+      renderFbPages();
+      showToast(`ลบเพจ "${removedName}" แล้ว`, 'info');
+    }
+
+    function switchSettingsTab(tabName) {
+      document.querySelectorAll('.settings-tab-content').forEach(el => {
+        el.style.display = 'none';
+      });
+      const targetContent = document.getElementById(`tab-${tabName}`);
+      if (targetContent) targetContent.style.display = 'block';
+
+      document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      const activeBtn = document.querySelector(`.settings-tab-btn[data-tab="${tabName}"]`);
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    // ═══════════════════════════════════════════
+    // PRODUCT IMAGE SCRAPER
+    // ═══════════════════════════════════════════
+    function scheduleProductImageScrape() {
+      clearTimeout(productImageScrapeTimer);
+      const url = document.getElementById('productUrl').value.trim();
+      if (!url || !url.startsWith('http')) {
+        clearProductImagePreview();
+        return;
+      }
+      productImageScrapeTimer = setTimeout(() => scrapeProductImage(), 900);
+    }
+
+    function renderProductImageChoices(urls) {
+      const previewDiv = document.getElementById('productImagePreview');
+      if (!previewDiv) return;
+
+      let choicesEl = document.getElementById('productImageChoices');
+      if (!choicesEl) {
+        choicesEl = document.createElement('div');
+        choicesEl.id = 'productImageChoices';
+        choicesEl.style.cssText = 'display:flex; gap:6px; margin-left:6px; flex-shrink:0;';
+        previewDiv.appendChild(choicesEl);
+      }
+
+      const uniqueUrls = Array.from(new Set(urls || [])).filter(Boolean).slice(0, 10);
+      choicesEl.innerHTML = uniqueUrls.map((url, idx) => `
+        <button type="button" onclick="selectProductImage('${encodeURIComponent(url)}')" title="Select image ${idx + 1}" style="width:38px; height:38px; padding:0; border:2px solid ${url === scrapedProductImageUrl ? '#2563eb' : 'rgba(148,163,184,0.55)'}; border-radius:7px; overflow:hidden; background:#fff; cursor:pointer;">
+          <img src="${url}" style="width:100%; height:100%; object-fit:cover; display:block;" />
+        </button>
+      `).join('');
+      choicesEl.style.display = uniqueUrls.length > 1 ? 'flex' : 'none';
+    }
+
+    function selectProductImage(encodedUrl) {
+      const url = decodeURIComponent(encodedUrl);
+      scrapedProductImageUrl = url;
+      const imgEl = document.getElementById('productPreviewImg');
+      const urlEl = document.getElementById('productPreviewUrl');
+      if (imgEl) {
+        imgEl.src = url;
+        imgEl.style.display = 'block';
+      }
+      if (urlEl) urlEl.textContent = url;
+      renderProductImageChoices(scrapedProductImageUrls);
+    }
+
+    async function scrapeProductImage() {
+      const url = document.getElementById('productUrl').value.trim();
+      if (!url) return;
+      if (!url.startsWith('http')) return;
+      const baseUrl = getWorkerBaseUrl();
+      if (!baseUrl) {
+        showToast('Worker URL is not configured in WORKER_BASE_URL.', 'error');
+        return;
+      }
+      workerBaseUrl = baseUrl;
+
+      const previewDiv = document.getElementById('productImagePreview');
+      const imgEl = document.getElementById('productPreviewImg');
+      const urlEl = document.getElementById('productPreviewUrl');
+
+      if (!previewDiv || !imgEl || !urlEl) return;
+      urlEl.title = `Worker: ${baseUrl}`;
+
+      previewDiv.style.display = 'flex';
+      imgEl.src = '';
+      imgEl.style.display = 'none';
+      urlEl.innerHTML = '<span style="animation: pulse-dot 1.5s infinite; opacity: 0.6;">กำลังดึงรูปภาพสินค้าชิ้นที่ 2...</span>';
+
+      try {
+        const requestedUrl = url;
+        const res = await fetch(`${baseUrl}/api/scrape-product`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productUrl: url })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || `Worker HTTP ${res.status}`);
+        }
+        if (document.getElementById('productUrl').value.trim() !== requestedUrl) return;
+
+        if (data.success && data.imageUrl) {
+          scrapedProductImageUrls = Array.isArray(data.imageUrls) && data.imageUrls.length ? data.imageUrls : [data.imageUrl];
+          scrapedProductImageUrl = data.imageUrl;
+          imgEl.src = data.imageUrl;
+          imgEl.style.display = 'block';
+          urlEl.textContent = data.imageUrl;
+          renderProductImageChoices(scrapedProductImageUrls);
+          showToast('ดึงรูปภาพสินค้าชิ้นที่ 2 สำเร็จ!', 'success');
+        } else {
+          throw new Error('ไม่พบรูปภาพสินค้าชิ้นที่ 2 ในลิงก์นี้');
+        }
+      } catch (err) {
+        console.error('Failed to scrape product image:', err);
+        showToast('Product image fetch failed: ' + (err.message || err), 'error');
+        urlEl.textContent = 'ไม่สามารถดึงรูปภาพได้ (ส่งเฉพาะลิงก์)';
+        scrapedProductImageUrl = '';
+        imgEl.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+        imgEl.style.display = 'block';
+      }
+    }
+
+    function clearProductImagePreview() {
+      const previewDiv = document.getElementById('productImagePreview');
+      if (previewDiv) previewDiv.style.display = 'none';
+      scrapedProductImageUrl = '';
+      scrapedProductImageUrls = [];
+      const choicesEl = document.getElementById('productImageChoices');
+      if (choicesEl) choicesEl.innerHTML = '';
+    }
+
+    // ═══════════════════════════════════════════
+    // SPA TAB & HISTORY CONTROL & DYNAMIC SYNC
+    // ═══════════════════════════════════════════
+    function switchMainTab(tab) {
+      currentMainTab = tab;
+
+      const createWorkspace = document.getElementById('createWorkspace');
+      const historyWorkspace = document.getElementById('historyWorkspace');
+      const topTitle = document.querySelector('.top-bar .page-title');
+      const topDesc = document.querySelector('.top-bar .page-desc');
+
+      if (!createWorkspace || !historyWorkspace || !topTitle || !topDesc) return;
+
+      // Update sidebar & mobile active states
+      document.getElementById('nav-create').classList.remove('active');
+      document.getElementById('nav-history').classList.remove('active');
+      document.getElementById('mob-nav-create').classList.remove('active');
+      document.getElementById('mob-nav-history').classList.remove('active');
+
+      if (tab === 'create') {
+        createWorkspace.style.display = 'block';
+        historyWorkspace.style.display = 'none';
+
+        document.getElementById('nav-create').classList.add('active');
+        document.getElementById('mob-nav-create').classList.add('active');
+
+        topTitle.innerHTML = `
+          <span class="material-symbols-rounded">bolt</span>
+          สร้างโพสต์ใหม่
+        `;
+        topDesc.textContent = 'วางลิงก์คลิป TikTok หรือ Instagram Reels และลิงก์สินค้า ระบบจะช่วยแกะวิดีโอและส่งไฟล์ดิบแชร์โพสต์ตรงเข้า n8n ให้คุณทันที!';
+      } else {
+        createWorkspace.style.display = 'none';
+        historyWorkspace.style.display = 'block';
+
+        document.getElementById('nav-history').classList.add('active');
+        document.getElementById('mob-nav-history').classList.add('active');
+
+        topTitle.innerHTML = `
+          <span class="material-symbols-rounded">history</span>
+          ประวัติการโพสต์
+          <span class="title-badge" id="historyCountBadge">ทั้งหมด: ${postHistory.length} รายการ</span>
+        `;
+        topDesc.textContent = 'ดูรายการโพสต์ย้อนหลัง ดึงข้อมูลจากฐานข้อมูล webhook ค้นหา คัดลอกแคปชัน และตรวจสอบสถานะรายการโพสต์ของคุณได้ทันที!';
+
+        // Auto-refresh rendering
+        renderHistoryList();
+      }
+    }
+
+    async function syncDbData() {
+      const syncBtn = document.getElementById('syncSpinnerIcon');
+      if (syncBtn) {
+        syncBtn.style.animation = 'spin 1s linear infinite';
+      }
+
+      const dbPagesUrl = 'https://n8n-9ych.srv1728018.hstgr.cloud/webhook/DbFacebook';
+      const dbHistoryUrl = 'https://n8n-9ych.srv1728018.hstgr.cloud/webhook/InfoHis';
+
+      try {
+        const userMeta = await getWebhookUserMeta();
+        const basePayload = {
+          loginUser: userMeta,
+          userId: userMeta?.uid || '',
+          userEmail: userMeta?.email || '',
+          userName: userMeta?.displayName || '',
+          timestamp: new Date().toISOString()
+        };
+
+        const fetchDbInfo = async (url, action) => {
+          const payload = { ...basePayload, action };
+          const query = new URLSearchParams({
+            action,
+            userId: payload.userId,
+            userEmail: payload.userEmail,
+            userName: payload.userName,
+            loginUser: JSON.stringify(payload.loginUser || null),
+            timestamp: payload.timestamp
+          });
+          return fetch(`${url}?${query.toString()}`, { method: 'GET' });
+        };
+
+        // Fetch both endpoints in parallel using Promise.allSettled
+        const [pagesRes, historyRes] = await Promise.allSettled([
+          fetchDbInfo(dbPagesUrl, 'facebook_pages_list'),
+          fetchDbInfo(dbHistoryUrl, 'post_history_list')
+        ]);
+
+        // 1. Process Facebook Pages DB
+        if (pagesRes.status === 'fulfilled' && pagesRes.value.ok) {
+          try {
+            const pagesData = await pagesRes.value.json();
+            let rawPages = [];
+
+            const processPage = (item) => {
+              if (!item || typeof item !== 'object') return;
+              if (item.namePage || item.idPage || item.name || item.id) {
+                // Prevent history items from leaking into pages
+                if (!item.productName && !item.action && !item.CaptionFacebook) {
+                  rawPages.push({
+                    name: String(item.namePage || item.name || '').trim(),
+                    id: String(item.idPage || item.id || '').trim(),
+                    token: String(item.token || item.pageToken || item.tokenPage || item.accessToken || item.fbPageToken || '').trim()
+                  });
+                }
+              }
+            };
+
+            if (Array.isArray(pagesData)) {
+              pagesData.forEach(item => {
+                if (Array.isArray(item)) {
+                  item.forEach(sub => processPage(sub));
+                } else {
+                  processPage(item);
+                }
+              });
+            } else if (pagesData && typeof pagesData === 'object') {
+              const keys = Object.keys(pagesData);
+              keys.forEach(k => {
+                if (Array.isArray(pagesData[k])) {
+                  pagesData[k].forEach(item => processPage(item));
+                }
+              });
+              processPage(pagesData);
+            }
+
+            const uniquePages = [];
+            const seenIds = new Set();
+            rawPages.forEach(p => {
+              if (p.name && p.id && !seenIds.has(p.id)) {
+                seenIds.add(p.id);
+                uniquePages.push(p);
+              }
+            });
+
+            if (uniquePages.length > 0) {
+              fbPages = uniquePages;
+              localStorage.setItem('fbPages', JSON.stringify(fbPages));
+              renderFbPages();
+            }
+          } catch (e) {
+            console.error('Failed to parse Facebook Pages:', e);
+          }
+        } else {
+          console.warn('Facebook Pages DB returned error or not active');
+        }
+
+        // 2. Process post history data
+        if (historyRes.status === 'fulfilled' && historyRes.value.ok) {
+          try {
+            const historyData = await historyRes.value.json();
+            let rawHistory = [];
+
+            const processHistory = (item) => {
+              if (!item || typeof item !== 'object') return;
+              if (item.productName || item.productUrl || item.CaptionFacebook || item.action) {
+                rawHistory.push({
+                  id: item.id || '',
+                  action: String(item.action || 'post').trim(),
+                  productName: String(item.productName || '').trim(),
+                  productUrl: String(item.productUrl || '').trim(),
+                  platform: String(item.platform || '').toLowerCase().trim(),
+                  note: String(item.note || '').trim(),
+                  CaptionFacebook: item.CaptionFacebook || null,
+                  productImageUrl: String(item.productImageUrl || item.imageUrl || '').trim(),
+                  fbPageName: String(item.fbPageName || item.namePage || '').trim(),
+                  createdAt: item.createdAt || '',
+                  updatedAt: item.updatedAt || ''
+                });
+              }
+            };
+
+            if (Array.isArray(historyData)) {
+              historyData.forEach(item => {
+                if (Array.isArray(item)) {
+                  item.forEach(sub => processHistory(sub));
+                } else {
+                  processHistory(item);
+                }
+              });
+            } else if (historyData && typeof historyData === 'object') {
+              const keys = Object.keys(historyData);
+              keys.forEach(k => {
+                if (Array.isArray(historyData[k])) {
+                  historyData[k].forEach(item => processHistory(item));
+                }
+              });
+              processHistory(historyData);
+            }
+
+            // Sort history descending by date / ID
+            rawHistory.sort((a, b) => {
+              const dateA = new Date(a.createdAt || a.updatedAt || 0);
+              const dateB = new Date(b.createdAt || b.updatedAt || 0);
+              if (dateA.getTime() !== dateB.getTime()) {
+                return dateB.getTime() - dateA.getTime();
+              }
+              return (Number(b.id) || 0) - (Number(a.id) || 0);
+            });
+
+            postHistory = rawHistory;
+            renderHistoryList();
+
+            if (currentMainTab === 'history') {
+              const badge = document.getElementById('historyCountBadge');
+              if (badge) badge.textContent = `ทั้งหมด: ${postHistory.length} รายการ`;
+            }
+
+          } catch (e) {
+            console.error('Failed to parse History items:', e);
+          }
+        } else {
+          console.warn('History DB returned error or not active');
+        }
+
+        showToast('ซิงก์ข้อมูลฐานข้อมูลสำเร็จ!', 'success');
+      } catch (err) {
+        console.error('Database sync failed:', err);
+        showToast('การเชื่อมต่อซิงก์ข้อมูลล้มเหลว: ' + err.message, 'error');
+      } finally {
+        if (syncBtn) {
+          syncBtn.style.animation = '';
+        }
+      }
+    }
+
+    function renderCardsHtml(items) {
+      return items.map(item => {
+        const globalIndex = postHistory.indexOf(item);
+        const platformClass = item.platform === 'lazada' ? 'lazada' : (item.platform === 'shopee' ? 'shopee' : 'other');
+        const platformName = item.platform === 'lazada' ? 'Lazada' : (item.platform === 'shopee' ? 'Shopee' : 'โพสต์');
+
+        let formattedDate = '';
+        try {
+          if (item.createdAt || item.updatedAt) {
+            const dateObj = new Date(item.createdAt || item.updatedAt);
+            formattedDate = dateObj.toLocaleString('th-TH', {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          }
+        } catch (e) { }
+
+        const imageUrl = item.productImageUrl || item.imageUrl || '';
+        const note = item.note || '';
+        const caption = item.CaptionFacebook || '';
+
+        return `
+          <div class="history-card ${platformClass}">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+              <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                <span class="badge ${platformClass}">${platformName}</span>
+                ${note ? `<span style="background: var(--accent-light); color: var(--accent); font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: -0.2px;">${escapeHtml(note)}</span>` : ''}
+              </div>
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">
+                ${formattedDate}
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px; align-items: flex-start; margin-top: 4px;">
+              ${imageUrl ? `
+                <div style="width: 54px; height: 54px; border-radius: 8px; overflow: hidden; background: #e2e8f0; border: 1px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                  <img src="${escapeHtml(imageUrl)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'" />
+                </div>
+              ` : ''}
+              <div style="flex: 1; min-width: 0;">
+                <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin: 0; line-height: 1.45;" title="${escapeHtml(item.productName)}">
+                  ${escapeHtml(item.productName)}
+                </h4>
+                ${item.productUrl ? `
+                  <a href="${escapeHtml(item.productUrl)}" target="_blank" style="font-size: 11.5px; color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; font-weight: 700;">
+                    <span class="material-symbols-rounded" style="font-size: 14px;">link</span>
+                    ลิงก์สินค้า
+                  </a>
+                ` : ''}
+              </div>
+            </div>
+            
+            ${item.fbPageName ? `
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-muted); background: #f8fafc; padding: 6px 10px; border-radius: 8px; border: 1px solid #f1f5f9; font-weight: 700; margin-top: 2px;">
+                <span class="material-symbols-rounded" style="font-size: 15px; color: var(--accent);">pages</span>
+                เพจ: <span style="color: var(--text); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;">${escapeHtml(item.fbPageName)}</span>
+              </div>
+            ` : ''}
+            
+            ${caption ? `
+              <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">แคปชันโพสต์:</span>
+                  <button class="btn-copy" onclick="copyCaptionByIndex(this, ${globalIndex})" style="border: none; background: transparent; cursor: pointer; color: var(--accent); display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 11.5px; font-family: inherit; outline: none; padding: 0; transition: all 0.2s;">
+                    <span class="material-symbols-rounded" style="font-size: 15px;">content_copy</span>
+                    คัดลอกแคปชัน
+                  </button>
+                </div>
+                <div class="caption-text-area" style="font-size: 12px; line-height: 1.5; color: var(--text); background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; max-height: 80px; overflow-y: auto; font-family: inherit; font-weight: 500; white-space: pre-wrap; word-break: break-all;">${escapeHtml(caption)}</div>
+              </div>
+            ` : `
+              <div style="font-size: 11px; color: var(--text-muted); font-style: italic; text-align: center; margin-top: 4px;">
+                (ไม่มีข้อความแคปชัน)
+              </div>
+            `}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderHistoryList() {
+      // 1. Render Dedicated History Tab
+      const grid = document.getElementById('historyItemsGrid');
+      if (grid) {
+        const searchVal = document.getElementById('historySearchInput')?.value?.toLowerCase().trim() || '';
+        let filtered = postHistory;
+
+        if (historyFilter !== 'all') {
+          filtered = filtered.filter(item => item.platform === historyFilter);
+        }
+
+        if (searchVal) {
+          filtered = filtered.filter(item => {
+            return (
+              item.productName.toLowerCase().includes(searchVal) ||
+              item.platform.toLowerCase().includes(searchVal) ||
+              item.note.toLowerCase().includes(searchVal) ||
+              (item.CaptionFacebook && item.CaptionFacebook.toLowerCase().includes(searchVal)) ||
+              item.fbPageName.toLowerCase().includes(searchVal)
+            );
+          });
+        }
+
+        if (filtered.length === 0) {
+          grid.innerHTML = `
+            <div style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-muted); text-align: center; background: rgba(0,0,0,0.01); border-radius: var(--radius-sm); border: 1px dashed var(--border);">
+              <span class="material-symbols-rounded" style="font-size: 48px; color: #cbd5e1; margin-bottom: 12px;">search_off</span>
+              <p style="font-size: 14px; font-weight: 700; color: var(--text);">ไม่พบรายการประวัติการโพสต์</p>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">ลองเปลี่ยนคำค้นหา หรือคลิก "ดึงข้อมูลล่าสุด" ด้านบน</p>
+            </div>
+          `;
+        } else {
+          grid.innerHTML = renderCardsHtml(filtered);
+        }
+      }
+
+      // 2. Render Recent History on Home page (Below Create Post form)
+      const recentGrid = document.getElementById('recentHistoryGrid');
+      if (recentGrid) {
+        // Show only the 5 most recent posts under the form
+        const recentItems = postHistory.slice(0, 5);
+
+        if (recentItems.length === 0) {
+          recentGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; padding: 30px; text-align: center; color: var(--text-muted); font-size: 13px; font-style: italic; background: rgba(0,0,0,0.01); border-radius: var(--radius-sm); border: 1px dashed var(--border);">
+              ยังไม่มีประวัติการโพสต์ ดึงข้อมูลจากฐานข้อมูลโดยการคลิก "ดึงข้อมูลล่าสุด" ด้านบน หรือส่งงานโพสต์ครั้งแรก!
+            </div>
+          `;
+        } else {
+          recentGrid.innerHTML = renderCardsHtml(recentItems);
+        }
+      }
+    }
+
+    async function copyCaptionByIndex(btn, index) {
+      const item = postHistory[index];
+      if (!item || !item.CaptionFacebook) return;
+      try {
+        await navigator.clipboard.writeText(item.CaptionFacebook);
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="material-symbols-rounded" style="font-size: 15px; color: var(--green);">check</span> คัดลอกสำเร็จ!';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.color = '';
+        }, 2000);
+        showToast('คัดลอกแคปชันสำเร็จ!', 'success');
+      } catch (err) {
+        showToast('ไม่สามารถคัดลอกแคปชันได้', 'error');
+      }
+    }
+
+    function setHistoryFilter(filterVal) {
+      historyFilter = filterVal;
+
+      document.getElementById('history-filter-all').classList.remove('active');
+      document.getElementById('history-filter-lazada').classList.remove('active');
+      document.getElementById('history-filter-shopee').classList.remove('active');
+
+      const targetBtn = document.getElementById(`history-filter-${filterVal}`);
+      if (targetBtn) targetBtn.classList.add('active');
+
+      renderHistoryList();
+    }
+
+    function filterHistory() {
+      renderHistoryList();
+    }
+  </script>
+</body>
+
+</html>
