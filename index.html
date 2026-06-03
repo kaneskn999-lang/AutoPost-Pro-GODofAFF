@@ -2341,12 +2341,8 @@
     let historyFilter = 'all';   // 'all', 'lazada', 'shopee'
     let currentMainTab = 'create'; // 'create', 'history'
 
-    // Load saved Facebook pages
-    try {
-      fbPages = JSON.parse(localStorage.getItem('fbPages') || '[]');
-    } catch (e) {
-      fbPages = [];
-    }
+    // Facebook pages are loaded from webhook only.
+    fbPages = [];
 
     // Reset daily count if date has changed
     if (localStorage.getItem('todayKey') !== todayKey) {
@@ -2566,7 +2562,7 @@
         setConnectionStatus(false);
       }
 
-      // Load Facebook Pages
+      // Render empty state until webhook sync returns Facebook Pages.
       renderFbPages();
 
       // Register Product URL Scraper Event Listeners
@@ -3039,7 +3035,6 @@
         if (pages.length === 0) throw new Error('Webhook returned no Facebook Pages');
 
         fbPages = pages;
-        localStorage.setItem('fbPages', JSON.stringify(fbPages));
         renderFbPages();
         showToast(`Loaded ${pages.length} Facebook Page(s) from DB`, 'success');
       } catch (err) {
@@ -3126,7 +3121,6 @@
 
       const page = { name, id, token };
       fbPages.push(page);
-      localStorage.setItem('fbPages', JSON.stringify(fbPages));
 
       nameInput.value = '';
       idInput.value = '';
@@ -3142,7 +3136,6 @@
       const removedPage = fbPages[index];
       const removedName = removedPage.name;
       fbPages.splice(index, 1);
-      localStorage.setItem('fbPages', JSON.stringify(fbPages));
       syncFacebookPagesToWebhook('delete', removedPage);
       renderFbPages();
       showToast(`ลบเพจ "${removedName}" แล้ว`, 'info');
@@ -3413,14 +3406,20 @@
 
             if (uniquePages.length > 0) {
               fbPages = uniquePages;
-              localStorage.setItem('fbPages', JSON.stringify(fbPages));
+              renderFbPages();
+            } else {
+              fbPages = [];
               renderFbPages();
             }
           } catch (e) {
             console.error('Failed to parse Facebook Pages:', e);
+            fbPages = [];
+            renderFbPages();
           }
         } else {
           console.warn('Facebook Pages DB returned error or not active');
+          fbPages = [];
+          renderFbPages();
         }
 
         // 2. Process post history data
