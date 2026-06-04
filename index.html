@@ -588,6 +588,8 @@
       position: relative;
       display: flex;
       align-items: center;
+      width: 100%;
+      min-width: 0;
     }
 
     .text-input-wrapper .material-symbols-rounded {
@@ -602,11 +604,19 @@
       padding: 14px 18px 14px 46px;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      font-size: 14px;
+      font-size: 16px;
       font-family: inherit;
       outline: none;
       background: #f8fafc;
       transition: all 0.2s;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    #productUrl {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .text-input:focus {
@@ -715,7 +725,7 @@
       padding: 14px 18px;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      font-size: 14px;
+      font-size: 16px;
       font-family: inherit;
       outline: none;
       background: #f8fafc;
@@ -1698,9 +1708,42 @@
         gap: 24px;
       }
 
+      .workspace-grid,
+      .form-preview-grid,
+      .form-column,
+      .input-group,
+      .text-input-wrapper,
+      .platform-note-grid {
+        min-width: 0;
+        max-width: 100%;
+      }
+
       .card {
         padding: 24px 16px;
         border-radius: 16px;
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      .text-input,
+      .select-input,
+      .settings-input {
+        font-size: 16px !important;
+        max-width: 100%;
+      }
+
+      #productImagePreview {
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+      }
+
+      #productPreviewUrl {
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .top-bar .page-title {
