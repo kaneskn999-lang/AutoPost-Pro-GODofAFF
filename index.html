@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 
 <head>
@@ -588,8 +588,6 @@
       position: relative;
       display: flex;
       align-items: center;
-      width: 100%;
-      min-width: 0;
     }
 
     .text-input-wrapper .material-symbols-rounded {
@@ -604,19 +602,11 @@
       padding: 14px 18px 14px 46px;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      font-size: 16px;
+      font-size: 14px;
       font-family: inherit;
       outline: none;
       background: #f8fafc;
       transition: all 0.2s;
-      min-width: 0;
-      max-width: 100%;
-    }
-
-    #productUrl {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     .text-input:focus {
@@ -725,7 +715,7 @@
       padding: 14px 18px;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      font-size: 16px;
+      font-size: 14px;
       font-family: inherit;
       outline: none;
       background: #f8fafc;
@@ -1708,42 +1698,9 @@
         gap: 24px;
       }
 
-      .workspace-grid,
-      .form-preview-grid,
-      .form-column,
-      .input-group,
-      .text-input-wrapper,
-      .platform-note-grid {
-        min-width: 0;
-        max-width: 100%;
-      }
-
       .card {
         padding: 24px 16px;
         border-radius: 16px;
-        min-width: 0;
-        max-width: 100%;
-      }
-
-      .text-input,
-      .select-input,
-      .settings-input {
-        font-size: 16px !important;
-        max-width: 100%;
-      }
-
-      #productImagePreview {
-        min-width: 0;
-        max-width: 100%;
-        overflow: hidden;
-      }
-
-      #productPreviewUrl {
-        min-width: 0;
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
       }
 
       .top-bar .page-title {
@@ -2355,8 +2312,8 @@
     // STATE & CONFIG
     // ═══════════════════════════════════════════
     // Hardcode endpoints here before delivering to each customer.
-    const WORKER_BASE_URL = 'https://kaneskn-worker.kaneskn999.workers.dev/';
-    const N8N_WEBHOOK_URL = 'https://n8n-9ych.srv1728018.hstgr.cloud/webhook/273e7d20-ebd4-4067-9d80-90eb34b1b900';
+    const WORKER_BASE_URL = 'http://127.0.0.1:8787';
+    const N8N_WEBHOOK_URL = 'https://n8n.srv1038568.hstgr.cloud/webhook-test/273e7d20-ebd4-4067-9d80-90eb34b1b900';
     let workerBaseUrl = WORKER_BASE_URL.replace(/\/+$/, '');
     let previewData = null;       // Cached preview response metadata
     let activePlatform = 'lazada'; // Selected platform for new clip
@@ -2366,6 +2323,7 @@
     let scrapedProductImageUrl = '';
     let productImageScrapeTimer = null;
     let scrapedProductImageUrls = [];
+    let autoFilledProductName = '';
     let firebaseAuth = null;
     let currentFirebaseUser = null;
     let lastSyncedUserId = '';
@@ -2384,8 +2342,12 @@
     let historyFilter = 'all';   // 'all', 'lazada', 'shopee'
     let currentMainTab = 'create'; // 'create', 'history'
 
-    // Facebook pages are loaded from webhook only.
-    fbPages = [];
+    // Load saved Facebook pages
+    try {
+      fbPages = JSON.parse(localStorage.getItem('fbPages') || '[]');
+    } catch (e) {
+      fbPages = [];
+    }
 
     // Reset daily count if date has changed
     if (localStorage.getItem('todayKey') !== todayKey) {
@@ -2605,7 +2567,7 @@
         setConnectionStatus(false);
       }
 
-      // Render empty state until webhook sync returns Facebook Pages.
+      // Load Facebook Pages
       renderFbPages();
 
       // Register Product URL Scraper Event Listeners
@@ -2809,6 +2771,7 @@
       // 1. Clear form fields immediately to let the user paste the next URL right away!
       document.getElementById('tiktokUrl').value = '';
       document.getElementById('productName').value = '';
+      autoFilledProductName = '';
       document.getElementById('productUrl').value = '';
       document.getElementById('noteText').value = '';
       clearProductImagePreview();
@@ -2963,6 +2926,7 @@
     function clearAll() {
       document.getElementById('tiktokUrl').value = '';
       document.getElementById('productName').value = '';
+      autoFilledProductName = '';
       document.getElementById('productUrl').value = '';
       document.getElementById('noteText').value = '';
       clearPreview();
@@ -3078,6 +3042,7 @@
         if (pages.length === 0) throw new Error('Webhook returned no Facebook Pages');
 
         fbPages = pages;
+        localStorage.setItem('fbPages', JSON.stringify(fbPages));
         renderFbPages();
         showToast(`Loaded ${pages.length} Facebook Page(s) from DB`, 'success');
       } catch (err) {
@@ -3164,6 +3129,7 @@
 
       const page = { name, id, token };
       fbPages.push(page);
+      localStorage.setItem('fbPages', JSON.stringify(fbPages));
 
       nameInput.value = '';
       idInput.value = '';
@@ -3179,6 +3145,7 @@
       const removedPage = fbPages[index];
       const removedName = removedPage.name;
       fbPages.splice(index, 1);
+      localStorage.setItem('fbPages', JSON.stringify(fbPages));
       syncFacebookPagesToWebhook('delete', removedPage);
       renderFbPages();
       showToast(`ลบเพจ "${removedName}" แล้ว`, 'info');
@@ -3266,7 +3233,7 @@
       previewDiv.style.display = 'flex';
       imgEl.src = '';
       imgEl.style.display = 'none';
-      urlEl.innerHTML = '<span style="animation: pulse-dot 1.5s infinite; opacity: 0.6;">กำลังดึงรูปภาพสินค้าชิ้นที่ 2...</span>';
+      urlEl.innerHTML = '<span style="animation: pulse-dot 1.5s infinite; opacity: 0.6;">กำลังดึงข้อมูลสินค้า...</span>';
 
       try {
         const requestedUrl = url;
@@ -3281,6 +3248,13 @@
           throw new Error(data.error || `Worker HTTP ${res.status}`);
         }
         if (document.getElementById('productUrl').value.trim() !== requestedUrl) return;
+
+        const productNameEl = document.getElementById('productName');
+        if (productNameEl && data.title && (!productNameEl.value.trim() || productNameEl.value.trim() === autoFilledProductName)) {
+          productNameEl.value = data.title;
+          autoFilledProductName = data.title;
+          showToast('ดึงชื่อสินค้าสำเร็จ!', 'success');
+        }
 
         if (data.success && data.imageUrl) {
           scrapedProductImageUrls = Array.isArray(data.imageUrls) && data.imageUrls.length ? data.imageUrls : [data.imageUrl];
@@ -3449,20 +3423,14 @@
 
             if (uniquePages.length > 0) {
               fbPages = uniquePages;
-              renderFbPages();
-            } else {
-              fbPages = [];
+              localStorage.setItem('fbPages', JSON.stringify(fbPages));
               renderFbPages();
             }
           } catch (e) {
             console.error('Failed to parse Facebook Pages:', e);
-            fbPages = [];
-            renderFbPages();
           }
         } else {
           console.warn('Facebook Pages DB returned error or not active');
-          fbPages = [];
-          renderFbPages();
         }
 
         // 2. Process post history data
@@ -3484,6 +3452,7 @@
                   CaptionFacebook: item.CaptionFacebook || null,
                   productImageUrl: String(item.productImageUrl || item.imageUrl || '').trim(),
                   fbPageName: String(item.fbPageName || item.namePage || '').trim(),
+                  idpostFB: String(item.idpostFB || item.fbPostId || item.postId || '').trim(),
                   createdAt: item.createdAt || '',
                   updatedAt: item.updatedAt || ''
                 });
@@ -3566,6 +3535,7 @@
         const imageUrl = item.productImageUrl || item.imageUrl || '';
         const note = item.note || '';
         const caption = item.CaptionFacebook || '';
+        const idpostFB = item.idpostFB || '';
 
         return `
           <div class="history-card ${platformClass}">
@@ -3602,6 +3572,13 @@
               <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-muted); background: #f8fafc; padding: 6px 10px; border-radius: 8px; border: 1px solid #f1f5f9; font-weight: 700; margin-top: 2px;">
                 <span class="material-symbols-rounded" style="font-size: 15px; color: var(--accent);">pages</span>
                 เพจ: <span style="color: var(--text); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;">${escapeHtml(item.fbPageName)}</span>
+              </div>
+            ` : ''}
+
+            ${idpostFB ? `
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-muted); background: #f8fafc; padding: 6px 10px; border-radius: 8px; border: 1px solid #f1f5f9; font-weight: 700; margin-top: 2px;">
+                <span class="material-symbols-rounded" style="font-size: 15px; color: var(--accent);">tag</span>
+                ID Post FB: <span style="color: var(--text); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;">${escapeHtml(idpostFB)}</span>
               </div>
             ` : ''}
             
@@ -3644,7 +3621,8 @@
               item.platform.toLowerCase().includes(searchVal) ||
               item.note.toLowerCase().includes(searchVal) ||
               (item.CaptionFacebook && item.CaptionFacebook.toLowerCase().includes(searchVal)) ||
-              item.fbPageName.toLowerCase().includes(searchVal)
+              item.fbPageName.toLowerCase().includes(searchVal) ||
+              (item.idpostFB && item.idpostFB.toLowerCase().includes(searchVal))
             );
           });
         }
