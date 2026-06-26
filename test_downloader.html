@@ -661,7 +661,7 @@
       const videoEl = document.getElementById('videoPreview');
       
       if (action === 'preview') {
-        videoEl.src = item.videoUrl;
+        videoEl.src = `${apiBase}/api/proxy-video?url=${encodeURIComponent(item.videoUrl)}`;
         videoEl.poster = item.coverUrl;
         
         // Links

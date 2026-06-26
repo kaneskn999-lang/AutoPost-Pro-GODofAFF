@@ -2723,7 +2723,7 @@
             <span class="material-symbols-rounded" style="font-size:14px;">visibility</span>
             ตัวอย่างคลิป
           </span>
-          <video controls playsinline autoplay muted src="${previewData.videoUrl}"></video>
+          <video controls playsinline autoplay muted src="${workerBaseUrl}/api/proxy-video?url=${encodeURIComponent(previewData.videoUrl)}"></video>
         `;
 
         showToast('ดึงตัวอย่างสำเร็จ! ตรวจสอบแล้วกดโพสต์ส่ง n8n ได้เลย', 'info');
