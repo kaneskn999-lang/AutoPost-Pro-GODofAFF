@@ -1,5 +1,5 @@
 // Test the deployed worker's /api/preview with a real Instagram Reel URL
-const workerUrl = 'https://tiktok-fetcher.p2scalworkhost.workers.dev';
+const workerUrl = 'https://kaneskn-worker.kaneskn999.workers.dev';
 const testUrl = 'https://www.instagram.com/reel/DZAhWPixshc/';
 
 async function testWorker() {

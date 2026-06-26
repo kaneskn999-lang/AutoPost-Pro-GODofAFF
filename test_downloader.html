@@ -480,7 +480,7 @@
           <label><span class="material-symbols-rounded">dns</span>เลือกเซิร์ฟเวอร์ Worker (Endpoint)</label>
           <select id="apiBaseSelect">
             <option value="http://127.0.0.1:8787">Local Worker (http://127.0.0.1:8787)</option>
-            <option value="https://tiktok-fetcher.p2scalworkhost.workers.dev">Production (tiktok-fetcher)</option>
+            <option value="https://kaneskn-worker.kaneskn999.workers.dev">Production (kaneskn-worker)</option>
           </select>
         </div>
 
@@ -586,7 +586,7 @@
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') {
       document.getElementById('apiBaseSelect').value = 'http://127.0.0.1:8787';
     } else {
-      document.getElementById('apiBaseSelect').value = 'https://tiktok-fetcher.p2scalworkhost.workers.dev';
+      document.getElementById('apiBaseSelect').value = 'https://kaneskn-worker.kaneskn999.workers.dev';
     }
 
     async function executeTest() {
