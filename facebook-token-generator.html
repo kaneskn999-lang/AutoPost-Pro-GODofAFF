@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facebook Page Token Generator</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #64748b;
+      --line: #dbe3ef;
+      --blue: #1877f2;
+      --green: #16a34a;
+      --red: #dc2626;
+      --soft-blue: #eaf2ff;
+      --shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, "Noto Sans Thai", sans-serif;
+      background:
+        linear-gradient(180deg, rgba(24, 119, 242, 0.08), transparent 260px),
+        var(--bg);
+      color: var(--ink);
+      padding: 26px;
+    }
+
+    .app {
+      width: min(1040px, 100%);
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--blue);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 30px;
+      font-weight: 800;
+      box-shadow: 0 14px 28px rgba(24, 119, 242, 0.26);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 34px);
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1.18fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid rgba(219, 227, 239, 0.9);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 14px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .step {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--soft-blue);
+      color: var(--blue);
+      display: inline-grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    label {
+      display: block;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    textarea,
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfdff;
+      color: var(--ink);
+      padding: 12px 13px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+      line-height: 1.5;
+      font-family: Consolas, monospace;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(24, 119, 242, 0.12);
+    }
+
+    .hint {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 11px;
+      min-height: 42px;
+      padding: 0 16px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #fff;
+      background: var(--blue);
+      box-shadow: 0 10px 22px rgba(24, 119, 242, 0.18);
+    }
+
+    button.secondary {
+      background: #e2e8f0;
+      color: #243244;
+      box-shadow: none;
+    }
+
+    button.success {
+      background: var(--green);
+      box-shadow: 0 10px 22px rgba(22, 163, 74, 0.18);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .status {
+      display: none;
+      margin-top: 14px;
+      padding: 12px 13px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.55;
+      border: 1px solid transparent;
+    }
+
+    .status.info {
+      display: block;
+      background: #eef6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
+    .status.ok {
+      display: block;
+      background: #ecfdf5;
+      color: #047857;
+      border-color: #bbf7d0;
+    }
+
+    .status.error {
+      display: block;
+      background: #fef2f2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+
+    .token-row {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .token-row input {
+      min-width: 0;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .token-row button {
+      flex: 0 0 auto;
+      min-height: 40px;
+      padding: 0 13px;
+    }
+
+    .empty {
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 22px;
+      color: var(--muted);
+      text-align: center;
+      background: #fbfdff;
+    }
+
+    .pages {
+      display: grid;
+      gap: 12px;
+    }
+
+    .page-card {
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+
+    .page-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .page-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .page-name {
+      font-weight: 900;
+      font-size: 16px;
+      color: #111827;
+      line-height: 1.35;
+    }
+
+    .page-id {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+      font-family: Consolas, monospace;
+    }
+
+    .badge {
+      color: #047857;
+      background: #dcfce7;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    details {
+      margin-top: 16px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+
+    summary {
+      cursor: pointer;
+      color: #334155;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .advanced-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #dbeafe;
+      border-radius: 12px;
+      padding: 13px;
+      max-height: 240px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+    }
+
+    @media (max-width: 860px) {
+      body { padding: 16px; }
+      .hero { align-items: flex-start; }
+      .layout { grid-template-columns: 1fr; }
+      .page-meta-grid { grid-template-columns: 1fr; }
+      .token-row { flex-direction: column; }
+      .token-row button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div class="brand">
+        <div class="logo">f</div>
+        <div>
+          <h1>Facebook Page Token</h1>
+          <p class="subtitle">กรอก User Access Token แล้วระบบจะดึง Page ID และ Page Access Token ให้พร้อมใช้งาน</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="card">
+        <h2 class="section-title"><span class="step">1</span>กรอกข้อมูล Facebook App</h2>
+        <label for="appId">Client ID / App ID</label>
+        <input id="appId" placeholder="เช่น 1868658533994358" autocomplete="off" />
+        <div style="height:12px;"></div>
+
+        <label for="appSecret">Client Secret</label>
+        <input id="appSecret" placeholder="วาง Client Secret ของ App ลูกค้า" autocomplete="off" />
+        <div style="height:12px;"></div>
+
+        <label for="shortToken">User Access Token</label>
+        <textarea id="shortToken" spellcheck="false" placeholder="วาง User Access Token จาก Facebook Graph API Explorer หรือระบบของคุณ"></textarea>
+        <p class="hint">ใช้ข้อมูลจาก Facebook App ของลูกค้าเท่านั้น และ User Access Token ต้องเป็นของผู้ใช้ที่มีสิทธิ์จัดการเพจ</p>
+
+        <div class="actions">
+          <button id="runBtn" onclick="runTokenFlow()">Generate Page Token</button>
+          <button class="secondary" onclick="clearOutput()">ล้างข้อมูล</button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <details>
+          <summary>Advanced: วาง JSON จาก n8n แทนการยิง API</summary>
+          <div class="advanced-grid">
+            <div>
+              <label for="tokenJsonInput">Output JSON ตัวแรก</label>
+              <textarea id="tokenJsonInput" spellcheck="false" placeholder='[{"access_token":"...","token_type":"bearer"}]'></textarea>
+            </div>
+            <div>
+              <label for="pagesJsonInput">Output JSON ตัวที่สอง</label>
+              <textarea id="pagesJsonInput" spellcheck="false" placeholder='[{"data":[{"name":"ชื่อเพจ","id":"Page ID","access_token":"Page Token"}]}]'></textarea>
+            </div>
+            <div class="actions">
+              <button class="secondary" onclick="parseN8nOutput()">Parse JSON</button>
+              <button class="secondary" onclick="copyDbJson()">Copy DB JSON</button>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title"><span class="step">2</span>ผลลัพธ์</h2>
+        <label for="longToken">Long-lived User Token</label>
+        <div class="token-row">
+          <input id="longToken" readonly placeholder="จะแสดงหลังจาก Generate" />
+          <button class="secondary" onclick="copyValue('longToken')">Copy</button>
+        </div>
+
+        <div style="height:16px;"></div>
+        <div id="pagesResult" class="pages">
+          <div class="empty">ยังไม่มีข้อมูลเพจ</div>
+        </div>
+      </section>
+    </div>
+
+    <details class="card">
+      <summary>Raw JSON สำหรับตรวจสอบ</summary>
+      <pre id="rawJson">ยังไม่มีข้อมูล</pre>
+    </details>
+  </main>
+
+  <script>
+    const GRAPH_VERSION = 'v24.0';
+
+    const statusEl = document.getElementById('status');
+    const rawJsonEl = document.getElementById('rawJson');
+    const pagesResultEl = document.getElementById('pagesResult');
+    const longTokenEl = document.getElementById('longToken');
+    let latestDbPages = [];
+
+    function setStatus(message, type = 'info') {
+      statusEl.textContent = message;
+      statusEl.className = `status ${type}`;
+    }
+
+    function setRaw(data) {
+      rawJsonEl.textContent = JSON.stringify(data, null, 2);
+    }
+
+    function requireValue(value, label) {
+      if (!value) throw new Error(`กรุณากรอก ${label}`);
+    }
+
+    async function graphGet(path, params) {
+      const url = new URL(`https://graph.facebook.com/${GRAPH_VERSION}/${path.replace(/^\/+/, '')}`);
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          url.searchParams.set(key, value);
+        }
+      });
+
+      const res = await fetch(url.toString(), { method: 'GET' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message = data?.error?.message || `Facebook Graph HTTP ${res.status}`;
+        throw new Error(message);
+      }
+      return data;
+    }
+
+    async function exchangeTokenOnly() {
+      const appId = document.getElementById('appId').value.trim();
+      const appSecret = document.getElementById('appSecret').value.trim();
+      const shortToken = document.getElementById('shortToken').value.trim();
+      requireValue(appId, 'Client ID / App ID');
+      requireValue(appSecret, 'Client Secret');
+      requireValue(shortToken, 'User Access Token');
+
+      const data = await graphGet('/oauth/access_token', {
+        grant_type: 'fb_exchange_token',
+        client_id: appId,
+        client_secret: appSecret,
+        fb_exchange_token: shortToken
+      });
+
+      longTokenEl.value = data.access_token || '';
+      return data.access_token || '';
+    }
+
+    async function getPagesOnly() {
+      const longToken = longTokenEl.value.trim();
+      requireValue(longToken, 'Long-lived User Token');
+
+      const data = await graphGet('/me/accounts', {
+        access_token: longToken
+      });
+
+      renderPages(data.data || []);
+      return data;
+    }
+
+    async function runTokenFlow() {
+      const btn = document.getElementById('runBtn');
+      btn.disabled = true;
+      pagesResultEl.innerHTML = '<div class="empty">กำลังดึงข้อมูล...</div>';
+
+      try {
+        setStatus('กำลังสร้าง Long-lived token...', 'info');
+        const longToken = await exchangeTokenOnly();
+        if (!longToken) throw new Error('Facebook ไม่ส่ง access_token กลับมา');
+
+        setStatus('กำลังดึงรายการ Facebook Pages...', 'info');
+        const pagesData = await getPagesOnly();
+        setRaw({
+          longToken,
+          pages: pagesData.data || [],
+          dbPages: latestDbPages
+        });
+        setStatus(`สำเร็จ พบ ${latestDbPages.length} เพจ`, 'ok');
+      } catch (err) {
+        pagesResultEl.innerHTML = '<div class="empty">ยังไม่มีข้อมูลเพจ</div>';
+        setStatus(err.message || String(err), 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function renderPages(pages) {
+      if (!Array.isArray(pages) || pages.length === 0) {
+        latestDbPages = [];
+        pagesResultEl.innerHTML = '<div class="empty">ไม่พบ Facebook Page จาก token นี้</div>';
+        return;
+      }
+
+      latestDbPages = pages.map((page, index) => ({
+        namePage: page.name || page.namePage || '',
+        idPage: page.id || page.idPage || '',
+        pageToken: page.access_token || page.pageToken || page.tokenPage || '',
+        tokenPage: page.access_token || page.pageToken || page.tokenPage || '',
+        id: index + 1
+      }));
+
+      pagesResultEl.innerHTML = pages.map((page, index) => {
+        const name = escapeHtml(page.name || '-');
+        const id = escapeHtml(page.id || '-');
+        const token = escapeHtml(page.access_token || '');
+        return `
+          <article class="page-card">
+            <div class="page-head">
+              <div>
+                <div class="page-name">${name}</div>
+                <div class="page-id">Page ID: ${id}</div>
+              </div>
+              <span class="badge">พร้อมใช้</span>
+            </div>
+
+            <div class="page-meta-grid">
+              <div>
+                <label>Page Name</label>
+                <div class="token-row">
+                  <input id="pageName${index}" value="${name}" readonly />
+                  <button class="secondary" onclick="copyValue('pageName${index}')">Copy</button>
+                </div>
+              </div>
+              <div>
+                <label>Page ID</label>
+                <div class="token-row">
+                  <input id="pageId${index}" value="${id}" readonly />
+                  <button class="secondary" onclick="copyValue('pageId${index}')">Copy</button>
+                </div>
+              </div>
+            </div>
+
+            <label>Page Access Token</label>
+            <div class="token-row">
+              <input id="pageToken${index}" value="${token}" readonly />
+              <button class="success" onclick="copyValue('pageToken${index}')">Copy Token</button>
+            </div>
+
+            <div class="actions">
+              <button class="secondary" onclick="copyPageJson(${index})">Copy Page JSON</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function parseJsonInput(id) {
+      const value = document.getElementById(id).value.trim();
+      if (!value) return null;
+      return JSON.parse(value);
+    }
+
+    function unwrapFirstRow(data) {
+      return Array.isArray(data) ? (data[0] || {}) : (data || {});
+    }
+
+    function parseN8nOutput() {
+      try {
+        const tokenJson = parseJsonInput('tokenJsonInput');
+        const pagesJson = parseJsonInput('pagesJsonInput');
+
+        if (tokenJson) {
+          const tokenRow = unwrapFirstRow(tokenJson);
+          if (tokenRow.access_token) longTokenEl.value = tokenRow.access_token;
+        }
+
+        if (pagesJson) {
+          const pagesRow = unwrapFirstRow(pagesJson);
+          const pages = Array.isArray(pagesRow.data) ? pagesRow.data : [];
+          renderPages(pages);
+          setRaw({ longToken: longTokenEl.value, pages, dbPages: latestDbPages });
+          setStatus(`Parse สำเร็จ พบ ${pages.length} เพจ`, 'ok');
+          return;
+        }
+
+        if (tokenJson) {
+          setRaw({ longToken: longTokenEl.value });
+          setStatus('Parse token สำเร็จ', 'ok');
+          return;
+        }
+
+        throw new Error('กรุณาวาง Output JSON อย่างน้อย 1 ช่อง');
+      } catch (err) {
+        setStatus('Parse JSON ไม่สำเร็จ: ' + (err.message || err), 'error');
+      }
+    }
+
+    function copyPageJson(index) {
+      const row = latestDbPages[index];
+      if (!row) return;
+      copyText(JSON.stringify(row, null, 2));
+    }
+
+    function copyDbJson() {
+      if (!latestDbPages.length) {
+        setStatus('ยังไม่มี Page JSON ให้ copy', 'error');
+        return;
+      }
+      copyText(JSON.stringify(latestDbPages, null, 2));
+    }
+
+    function copyValue(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      copyText(el.value || el.textContent || '');
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus('Copy สำเร็จ', 'ok');
+      } catch (err) {
+        setStatus('Copy ไม่สำเร็จ ให้ลากเลือกแล้ว copy เอง', 'error');
+      }
+    }
+
+    function clearOutput() {
+      document.getElementById('appId').value = '';
+      document.getElementById('appSecret').value = '';
+      document.getElementById('shortToken').value = '';
+      document.getElementById('tokenJsonInput').value = '';
+      document.getElementById('pagesJsonInput').value = '';
+      longTokenEl.value = '';
+      latestDbPages = [];
+      pagesResultEl.innerHTML = '<div class="empty">ยังไม่มีข้อมูลเพจ</div>';
+      rawJsonEl.textContent = 'ยังไม่มีข้อมูล';
+      statusEl.className = 'status';
+      statusEl.textContent = '';
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Firebase User Admin</title>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 460px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 20px 30px rgba(15, 23, 42, 0.08);
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    p {
+      margin: 0 0 20px;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 12px;
+      font: inherit;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px #eeebff;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 10px;
+      background: #4f46e5;
+      color: #fff;
+      font-weight: 800;
+      padding: 13px 16px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .status {
+      display: none;
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .status.ok {
+      display: block;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .status.error {
+      display: block;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="panel">
+    <h1>Add User</h1>
+    <p>สร้างผู้ใช้ใน Firebase Auth และบันทึกข้อมูลเข้า Firestore collection <strong>users</strong></p>
+
+    <form id="userForm">
+      <label for="name">Name</label>
+      <input id="name" autocomplete="name" placeholder="เช่น Admin One" required />
+
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" placeholder="user@email.com" required />
+
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="new-password" placeholder="อย่างน้อย 6 ตัวอักษร" minlength="6" required />
+
+      <label for="role">Role</label>
+      <select id="role">
+        <option value="user">user</option>
+        <option value="admin">admin</option>
+      </select>
+
+      <label for="status">Status</label>
+      <select id="status">
+        <option value="active">active</option>
+        <option value="disabled">disabled</option>
+      </select>
+
+      <button id="saveBtn" type="submit">Save User</button>
+      <div id="result" class="status"></div>
+    </form>
+  </main>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAzSHHw4_eXq5M0o6cKDRfO8SxGfi9qY9I",
+      authDomain: "postface-90b09.firebaseapp.com",
+    projectId: "postface-90b09",
+    storageBucket: "postface-90b09.firebasestorage.app",
+    messagingSenderId: "1030979365994",
+    appId: "1:1030979365994:web:fd5570afbbf898617eae13",
+    measurementId: "G-MRM5XG7XKW"
+    };
+
+    let auth;
+    let db;
+
+    function showStatus(message, type) {
+      const el = document.getElementById('result');
+      el.textContent = message;
+      el.className = `status ${type}`;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      db = firebase.firestore();
+
+      document.getElementById('userForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const saveBtn = document.getElementById('saveBtn');
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim().toLowerCase();
+        const password = document.getElementById('password').value;
+        const role = document.getElementById('role').value;
+        const status = document.getElementById('status').value;
+
+        if (!name || !email || !password) {
+          showStatus('Please enter name, email, and password.', 'error');
+          return;
+        }
+
+        if (password.length < 6) {
+          showStatus('Password must be at least 6 characters.', 'error');
+          return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        try {
+          const credential = await auth.createUserWithEmailAndPassword(email, password);
+          const uid = credential.user.uid;
+          await credential.user.updateProfile({ displayName: name });
+
+          const userRef = db.collection('users').doc(uid);
+          await userRef.set({
+            uid,
+            name,
+            email,
+            role,
+            status,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+
+          event.target.reset();
+          showStatus(`Created login user: ${email}`, 'ok');
+        } catch (error) {
+          console.error(error);
+          showStatus(`Save failed: ${error.message}`, 'error');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save User';
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

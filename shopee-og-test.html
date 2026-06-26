@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shopee OG Image Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, Tahoma, sans-serif;
+      background: #f6f7f9;
+      color: #172033;
+    }
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid #d9dee8;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(21, 31, 52, 0.06);
+    }
+    h1 { font-size: 22px; margin: 0 0 18px; }
+    label {
+      display: block;
+      font-weight: 700;
+      margin: 0 0 7px;
+      font-size: 13px;
+    }
+    input {
+      width: 100%;
+      border: 1px solid #c9d1df;
+      border-radius: 7px;
+      padding: 11px 12px;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+    button {
+      border: 0;
+      border-radius: 7px;
+      padding: 11px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #ee4d2d;
+      color: #fff;
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .result {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .preview {
+      width: 220px;
+      aspect-ratio: 1 / 1;
+      border: 1px solid #d9dee8;
+      border-radius: 8px;
+      background: #eef2f7;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+    .status {
+      min-height: 22px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      font-size: 13px;
+      color: #334155;
+    }
+    .url {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 7px;
+      background: #f1f5f9;
+      word-break: break-all;
+      font-size: 12px;
+    }
+    pre {
+      margin: 14px 0 0;
+      padding: 12px;
+      border-radius: 7px;
+      background: #0f172a;
+      color: #dbeafe;
+      overflow: auto;
+      min-height: 80px;
+      font-size: 12px;
+    }
+    @media (max-width: 720px) {
+      body { padding: 14px; }
+      .result { grid-template-columns: 1fr; }
+      .preview { width: 100%; max-width: 300px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Shopee Image Test</h1>
+
+    <label for="workerUrl">Worker URL</label>
+    <input id="workerUrl" value="http://127.0.0.1:8787" placeholder="เช่น http://127.0.0.1:8787 หรือ https://your-worker.workers.dev" />
+
+    <label for="productUrl">Shopee URL</label>
+    <input id="productUrl" value="https://s.shopee.co.th/809xekzNcy" placeholder="วางลิงก์ Shopee" />
+
+    <button id="testBtn" type="button">Test ดึงรูป</button>
+
+    <section class="result">
+      <div class="preview">
+        <span id="emptyText">No image</span>
+        <img id="previewImg" alt="Shopee product image" />
+      </div>
+      <div>
+        <div id="status" class="status">พร้อมทดสอบ</div>
+        <div id="imageUrl" class="url"></div>
+        <pre id="rawJson">{}</pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    $('testBtn').addEventListener('click', async () => {
+      const workerUrl = $('workerUrl').value.trim().replace(/\/+$/, '');
+      const productUrl = $('productUrl').value.trim();
+      if (!workerUrl) return setStatus('กรุณาใส่ Worker URL');
+      if (!productUrl) return setStatus('กรุณาใส่ Shopee URL');
+
+      $('testBtn').disabled = true;
+      setStatus('กำลังยิงไปที่ /api/scrape-product ...');
+      showImage('');
+      $('rawJson').textContent = '{}';
+
+      try {
+        const res = await fetch(workerUrl + '/api/scrape-product', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productUrl })
+        });
+        const data = await res.json();
+        $('rawJson').textContent = JSON.stringify(data, null, 2);
+
+        if (!res.ok || !data.success || !data.imageUrl) {
+          throw new Error(data.error || 'ไม่พบ imageUrl');
+        }
+
+        showImage(data.imageUrl);
+        setStatus('ดึงรูปสำเร็จ');
+      } catch (err) {
+        setStatus('ดึงไม่สำเร็จ: ' + (err.message || err));
+      } finally {
+        $('testBtn').disabled = false;
+      }
+    });
+
+    function setStatus(text) {
+      $('status').textContent = text;
+    }
+
+    function showImage(url) {
+      const img = $('previewImg');
+      const box = $('imageUrl');
+      if (!url) {
+        img.src = '';
+        img.style.display = 'none';
+        $('emptyText').style.display = 'block';
+        box.textContent = '';
+        box.style.display = 'none';
+        return;
+      }
+      img.src = url;
+      img.style.display = 'block';
+      $('emptyText').style.display = 'none';
+      box.textContent = url;
+      box.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

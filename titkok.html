@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 
 <head>
@@ -2037,6 +2037,10 @@
               <span class="material-symbols-rounded">pages</span>
               Facebook Pages
             </button>
+            <button class="settings-tab-btn" data-tab="shopee" onclick="switchSettingsTab('shopee')">
+              <span class="material-symbols-rounded">shopping_bag</span>
+              Shopee API
+            </button>
           </div>
         </div>
 
@@ -2074,6 +2078,31 @@
             </div>
           </div>
 
+          <!-- Shopee API Settings -->
+          <div class="settings-tab-content" id="tab-shopee" style="display: none;">
+            <div style="font-weight: 700; font-size: 14px; letter-spacing: -0.3px; color: #fff;">Shopee API Settings</div>
+            <div style="font-size: 11.5px; color: rgba(255,255,255,0.6); margin-top: 2px;">เก็บ App ID และ Secret สำหรับส่งต่อไปยัง Worker / Webhook</div>
+            <div class="settings-input-row" style="display: flex; gap: 8px; margin-top: 12px; max-width: 980px; flex-wrap: wrap;">
+              <input id="shopeeAppIdInput" class="settings-input" style="flex: 1; min-width: 190px; padding: 10px 14px;"
+                placeholder="Shopee App ID / Partner ID" />
+              <input id="shopeeSecretInput" class="settings-input" type="password" style="flex: 1.6; min-width: 240px; padding: 10px 14px;"
+                placeholder="Shopee Secret / Partner Key" />
+              <button class="btn-settings"
+                style="background:#f97316; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3); padding: 10px 16px;"
+                onclick="saveShopeeSettings()">บันทึก</button>
+              <button class="btn-settings"
+                style="background:rgba(255,255,255,0.12); box-shadow:none; padding: 10px 14px;"
+                onclick="toggleShopeeSecretVisibility()">แสดง/ซ่อน</button>
+              <button class="btn-settings"
+                style="background:#ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); padding: 10px 14px;"
+                onclick="clearShopeeSettings()">ล้างค่า</button>
+            </div>
+            <div id="shopeeSettingsStatus"
+              style="font-size: 11.5px; color: rgba(255,255,255,0.65); margin-top: 8px; font-weight: 600;">
+              ยังไม่ได้บันทึก Shopee API
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -2090,11 +2119,11 @@
               <div class="input-group">
                 <label class="input-label">
                   <span class="step">1</span>
-                  ลิงก์คลิป (TikTok / IG)
+                  ลิงก์คลิป (TikTok / IG / RED)
                 </label>
                 <div class="text-input-wrapper">
                   <span class="material-symbols-rounded">link</span>
-                  <input id="tiktokUrl" class="text-input" placeholder="วางลิงก์คลิป https://vt.tiktok.com/..."
+                  <input id="tiktokUrl" class="text-input" placeholder="วางลิงก์คลิป TikTok / IG / Xiaohongshu..."
                     onkeydown="if(event.key==='Enter') previewClip()" />
                 </div>
               </div>
@@ -2312,8 +2341,10 @@
     // STATE & CONFIG
     // ═══════════════════════════════════════════
     // Hardcode endpoints here before delivering to each customer.
-    const WORKER_BASE_URL = 'https://kaneskn-worker.kaneskn999.workers.dev/';
-    const N8N_WEBHOOK_URL = 'https://n8n-9ych.srv1728018.hstgr.cloud/webhook/273e7d20-ebd4-4067-9d80-90eb34b1b900';
+    const WORKER_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:'
+      ? 'http://127.0.0.1:8787'
+      : 'https://tiktok-fetcher.p2scalworkhost.workers.dev';
+    const N8N_WEBHOOK_URL = 'https://n8n.srv1038568.hstgr.cloud/webhook-test/273e7d20-ebd4-4067-9d80-90eb34b1b900';
     let workerBaseUrl = WORKER_BASE_URL.replace(/\/+$/, '');
     let previewData = null;       // Cached preview response metadata
     let activePlatform = 'lazada'; // Selected platform for new clip
@@ -2327,6 +2358,7 @@
     let firebaseAuth = null;
     let currentFirebaseUser = null;
     let lastSyncedUserId = '';
+    let shopeeSettings = { appId: '', secret: '' };
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyAzSHHw4_eXq5M0o6cKDRfO8SxGfi9qY9I",
       authDomain: "postface-90b09.firebaseapp.com",
@@ -2347,6 +2379,12 @@
       fbPages = JSON.parse(localStorage.getItem('fbPages') || '[]');
     } catch (e) {
       fbPages = [];
+    }
+
+    try {
+      shopeeSettings = JSON.parse(localStorage.getItem('shopeeSettings') || '{"appId":"","secret":""}');
+    } catch (e) {
+      shopeeSettings = { appId: '', secret: '' };
     }
 
     // Reset daily count if date has changed
@@ -2569,6 +2607,7 @@
 
       // Load Facebook Pages
       renderFbPages();
+      loadShopeeSettingsForm();
 
       // Register Product URL Scraper Event Listeners
       const prodUrlEl = document.getElementById('productUrl');
@@ -2656,7 +2695,7 @@
 
       const tiktokUrl = document.getElementById('tiktokUrl').value.trim();
       if (!tiktokUrl) {
-        showToast('กรุณากรอกลิงก์คลิปวิดีโอ TikTok / IG', 'error');
+        showToast('กรุณากรอกลิงก์คลิปวิดีโอ TikTok / IG / RED', 'error');
         document.getElementById('tiktokUrl').focus();
         return;
       }
@@ -2756,7 +2795,7 @@
 
       const tiktokUrl = document.getElementById('tiktokUrl').value.trim();
       if (!tiktokUrl) {
-        showToast('กรุณากรอกลิงก์คลิปวิดีโอ TikTok / IG', 'error');
+        showToast('กรุณากรอกลิงก์คลิปวิดีโอ TikTok / IG / RED', 'error');
         document.getElementById('tiktokUrl').focus();
         return;
       }
@@ -2767,6 +2806,18 @@
       const platform = activePlatform;
       const productImageUrl = scrapedProductImageUrl;
       const userMeta = await getWebhookUserMeta();
+      const currentShopeeSettings = getCurrentShopeeSettings();
+
+      if (platform === 'shopee' && (!currentShopeeSettings.appId || !currentShopeeSettings.secret)) {
+        switchSettingsTab('shopee');
+        showToast('กรุณากรอก Shopee App ID และ Secret ก่อนโพสต์ Shopee', 'error');
+        if (!currentShopeeSettings.appId) {
+          document.getElementById('shopeeAppIdInput')?.focus();
+        } else {
+          document.getElementById('shopeeSecretInput')?.focus();
+        }
+        return;
+      }
 
       // 1. Clear form fields immediately to let the user paste the next URL right away!
       document.getElementById('tiktokUrl').value = '';
@@ -2823,6 +2874,9 @@
           formData.append('productUrl', productUrl);
           formData.append('platform', platform);
           formData.append('note', noteText);
+          formData.append('shopeeAppId', currentShopeeSettings.appId);
+          formData.append('shopeeSecret', currentShopeeSettings.secret);
+          formData.append('shopeeSettings', JSON.stringify(currentShopeeSettings));
           formData.append('tiktokUrl', tiktokUrl);
           formData.append('title', originalTitle);
           formData.append('userId', userMeta?.uid || '');
@@ -3149,6 +3203,73 @@
       syncFacebookPagesToWebhook('delete', removedPage);
       renderFbPages();
       showToast(`ลบเพจ "${removedName}" แล้ว`, 'info');
+    }
+
+    function updateShopeeSettingsStatus() {
+      const statusEl = document.getElementById('shopeeSettingsStatus');
+      if (!statusEl) return;
+
+      if (shopeeSettings.appId && shopeeSettings.secret) {
+        statusEl.textContent = `บันทึกแล้ว: App ID ${shopeeSettings.appId}`;
+        statusEl.style.color = 'rgba(187, 247, 208, 0.9)';
+      } else if (shopeeSettings.appId || shopeeSettings.secret) {
+        statusEl.textContent = 'บันทึกบางส่วน: กรุณากรอก App ID และ Secret ให้ครบ';
+        statusEl.style.color = 'rgba(254, 240, 138, 0.95)';
+      } else {
+        statusEl.textContent = 'ยังไม่ได้บันทึก Shopee API';
+        statusEl.style.color = 'rgba(255,255,255,0.65)';
+      }
+    }
+
+    function loadShopeeSettingsForm() {
+      const appIdInput = document.getElementById('shopeeAppIdInput');
+      const secretInput = document.getElementById('shopeeSecretInput');
+      if (appIdInput) appIdInput.value = shopeeSettings.appId || '';
+      if (secretInput) secretInput.value = shopeeSettings.secret || '';
+      updateShopeeSettingsStatus();
+    }
+
+    function saveShopeeSettings() {
+      const appIdInput = document.getElementById('shopeeAppIdInput');
+      const secretInput = document.getElementById('shopeeSecretInput');
+      if (!appIdInput || !secretInput) return;
+
+      shopeeSettings = {
+        appId: appIdInput.value.trim(),
+        secret: secretInput.value.trim()
+      };
+
+      localStorage.setItem('shopeeSettings', JSON.stringify(shopeeSettings));
+      updateShopeeSettingsStatus();
+      showToast('บันทึก Shopee API Settings แล้ว', 'success');
+    }
+
+    function getCurrentShopeeSettings() {
+      const appIdInput = document.getElementById('shopeeAppIdInput');
+      const secretInput = document.getElementById('shopeeSecretInput');
+      const current = {
+        appId: (appIdInput?.value || shopeeSettings.appId || '').trim(),
+        secret: (secretInput?.value || shopeeSettings.secret || '').trim()
+      };
+
+      if (current.appId || current.secret) {
+        shopeeSettings = current;
+      }
+
+      return current;
+    }
+
+    function clearShopeeSettings() {
+      shopeeSettings = { appId: '', secret: '' };
+      localStorage.removeItem('shopeeSettings');
+      loadShopeeSettingsForm();
+      showToast('ล้างค่า Shopee API Settings แล้ว', 'info');
+    }
+
+    function toggleShopeeSecretVisibility() {
+      const secretInput = document.getElementById('shopeeSecretInput');
+      if (!secretInput) return;
+      secretInput.type = secretInput.type === 'password' ? 'text' : 'password';
     }
 
     function switchSettingsTab(tabName) {

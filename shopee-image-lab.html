@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shopee Image Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Tahoma, sans-serif;
+      background: #f6f7f9;
+      color: #172033;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; }
+    main { max-width: 980px; margin: 0 auto; }
+    h1 { margin: 0 0 16px; font-size: 24px; }
+    .panel {
+      background: #fff;
+      border: 1px solid #d9dee8;
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(21, 31, 52, 0.06);
+    }
+    label { display: block; font-weight: 700; font-size: 13px; margin: 0 0 7px; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #c9d1df;
+      border-radius: 7px;
+      padding: 11px 12px;
+      font-size: 14px;
+      background: #fff;
+      color: #172033;
+    }
+    textarea { min-height: 170px; font-family: Consolas, monospace; resize: vertical; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .row { margin-bottom: 14px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      border: 0;
+      border-radius: 7px;
+      padding: 11px 15px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #1f6feb;
+      color: #fff;
+    }
+    button.secondary { background: #475569; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .hint { color: #5a667a; font-size: 12px; line-height: 1.5; }
+    .result {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .preview {
+      width: 180px;
+      aspect-ratio: 1 / 1;
+      border: 1px solid #d9dee8;
+      border-radius: 8px;
+      background: #eef2f7;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .preview img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .status {
+      min-height: 22px;
+      color: #334155;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .url-box {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 7px;
+      background: #f1f5f9;
+      word-break: break-all;
+      font-size: 12px;
+      color: #0f172a;
+    }
+    @media (max-width: 760px) {
+      body { padding: 14px; }
+      .grid, .result { grid-template-columns: 1fr; }
+      .preview { width: 100%; max-width: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>ทดสอบดึงรูป Shopee</h1>
+
+    <section class="panel">
+      <div class="row">
+        <label for="productUrl" style="font-size:16px;">วางลิงก์ Shopee ตรงนี้</label>
+        <input
+          id="productUrl"
+          style="font-size:16px; border-color:#1f6feb; border-width:2px;"
+          value="https://s.shopee.co.th/809xekzNcy"
+          placeholder="เช่น https://s.shopee.co.th/809xekzNcy"
+        />
+        <div class="hint">รองรับทั้ง short link และลิงก์สินค้าปกติของ Shopee</div>
+      </div>
+
+      <div class="row" style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:12px; color:#7c2d12; font-size:13px; line-height:1.55;">
+        ใช้งานหน้านี้โดยวางลิงก์ Shopee ในช่องด้านบน แล้วกด <strong>Fetch Image</strong> เท่านั้น
+        ไม่ต้องกดเปิดลิงก์ Shopee ใน browser โดยตรง เพราะ console ของ Shopee จะมี warning/error ของระบบ Shopee เอง เช่น tracking blocked, manifest 404, หรือ 405 ซึ่งไม่ใช่ error ของ lab นี้
+      </div>
+
+      <div class="grid">
+        <div class="row">
+          <label for="provider">Provider</label>
+          <select id="provider">
+            <option value="worker">Worker เดิม (ลองฟรี)</option>
+            <option value="syphoon">Syphoon Shopee API</option>
+            <option value="lumintu">Lumintu Scraper</option>
+            <option value="noxapi">Noxapi item_detail_by_url</option>
+            <option value="custom">Custom JSON endpoint</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="apiKey">API key / token</label>
+          <input id="apiKey" type="password" placeholder="ใส่ key ของ provider สำหรับทดสอบ" />
+        </div>
+      </div>
+
+      <div class="row" id="workerUrlRow">
+        <label for="workerUrl">Worker URL สำหรับโหมดลองฟรี</label>
+        <input id="workerUrl" placeholder="เช่น http://127.0.0.1:8787 หรือ https://your-worker.workers.dev" />
+        <div class="hint">โหมดนี้ใช้ endpoint เดิม /api/scrape-product เพื่อยืนยันข้อจำกัดของ Shopee ก่อนใช้ provider จริง</div>
+      </div>
+
+      <div class="row" id="customEndpointRow" style="display:none">
+        <label for="customEndpoint">Custom endpoint</label>
+        <input id="customEndpoint" placeholder="https://your-api.example.com/shopee" />
+        <div class="hint">Custom endpoint ควรรับ JSON body: {"url":"..."} และคืน JSON ที่มี image/imageUrl/images/mainImageUrl อย่างใดอย่างหนึ่ง</div>
+      </div>
+
+      <div class="actions">
+        <button id="fetchBtn" type="button">Fetch Image</button>
+        <button class="secondary" id="clearBtn" type="button">Clear</button>
+      </div>
+      <p class="hint">ไฟล์นี้เป็นหน้าทดลองแยก ไม่เกี่ยวกับปุ่ม Post หรือ webhook ของหน้าหลัก</p>
+    </section>
+
+    <section class="panel result">
+      <div class="preview">
+        <span id="emptyText">No image</span>
+        <img id="previewImg" alt="Shopee product preview" />
+      </div>
+      <div>
+        <div id="status" class="status">พร้อมทดสอบ</div>
+        <div id="imageUrl" class="url-box" style="display:none"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <label for="rawJson">Raw response</label>
+      <textarea id="rawJson" readonly></textarea>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const providerEl = $('provider');
+    const fetchBtn = $('fetchBtn');
+    const clearBtn = $('clearBtn');
+    const customEndpointRow = $('customEndpointRow');
+
+    providerEl.addEventListener('change', () => {
+      customEndpointRow.style.display = providerEl.value === 'custom' ? 'block' : 'none';
+      $('workerUrlRow').style.display = providerEl.value === 'worker' ? 'block' : 'none';
+    });
+
+    clearBtn.addEventListener('click', () => {
+      $('rawJson').value = '';
+      $('status').textContent = 'พร้อมทดสอบ';
+      $('imageUrl').style.display = 'none';
+      $('imageUrl').textContent = '';
+      $('previewImg').style.display = 'none';
+      $('previewImg').src = '';
+      $('emptyText').style.display = 'block';
+    });
+
+    fetchBtn.addEventListener('click', async () => {
+      const url = $('productUrl').value.trim();
+      const key = $('apiKey').value.trim();
+      if (!url) return setStatus('กรุณาใส่ Shopee URL');
+      if (!['custom', 'worker'].includes(providerEl.value) && !key) return setStatus('กรุณาใส่ API key/token ของ provider');
+      if (providerEl.value === 'worker') {
+        const workerUrl = $('workerUrl').value.trim();
+        if (!workerUrl) return setStatus('กรุณาใส่ Worker URL ก่อน เช่น http://127.0.0.1:8787');
+      }
+
+      fetchBtn.disabled = true;
+      setStatus('กำลังดึงข้อมูล...');
+      $('rawJson').value = '';
+
+      try {
+        const data = await callProvider(providerEl.value, url, key);
+        $('rawJson').value = JSON.stringify(data, null, 2);
+        const image = findImageUrl(data);
+        if (!image) {
+          setStatus('ไม่พบ image URL ใน response ลองดู Raw response ว่า provider ใช้ field ชื่ออะไร');
+          showImage('');
+          return;
+        }
+        showImage(image);
+        setStatus('ดึงรูปสำเร็จ');
+      } catch (err) {
+        const message = err.message || String(err);
+        if (message.includes('405')) {
+          setStatus('ดึงไม่สำเร็จ: provider ตอบ 405 Method Not Allowed\nสาเหตุที่พบบ่อยคือ endpoint/provider ไม่รองรับการเรียกตรงจาก browser หรือเลือก provider ไม่ตรงกับ API key\nแนะนำให้ใช้ Custom JSON endpoint ผ่าน Worker/n8n proxy');
+        } else if (message.toLowerCase().includes('cors') || message.includes('Failed to fetch')) {
+          setStatus('ดึงไม่สำเร็จ: browser block ด้วย CORS หรือ provider ไม่ให้เรียกตรงจาก HTML\nแนะนำให้ใช้ Custom JSON endpoint ผ่าน Worker/n8n proxy');
+        } else {
+          setStatus('ดึงไม่สำเร็จ: ' + message);
+        }
+        showImage('');
+      } finally {
+        fetchBtn.disabled = false;
+      }
+    });
+
+    async function callProvider(provider, productUrl, apiKey) {
+      if (provider === 'worker') {
+        const workerUrl = $('workerUrl').value.trim().replace(/\/+$/, '');
+        return postJson(workerUrl + '/api/scrape-product', { productUrl });
+      }
+
+      if (provider === 'syphoon') {
+        return postJson('https://shopeeapi.syphoon.com', {
+          url: productUrl,
+          key: apiKey,
+          method: 'GET'
+        });
+      }
+
+      if (provider === 'lumintu') {
+        return postJson('https://lumintuscraper.com/api/shopee/scrape', { url: productUrl }, {
+          'Api-Key': apiKey
+        });
+      }
+
+      if (provider === 'noxapi') {
+        return postJson('http://api.noxapi.com/v1/shopee/item_detail_by_url', { url: productUrl }, {
+          'Authorization': 'Bearer ' + apiKey
+        });
+      }
+
+      const endpoint = $('customEndpoint').value.trim();
+      if (!endpoint) throw new Error('กรุณาใส่ Custom endpoint');
+      return postJson(endpoint, { url: productUrl, productUrl });
+    }
+
+    async function postJson(endpoint, body, extraHeaders = {}) {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...extraHeaders
+        },
+        body: JSON.stringify(body)
+      });
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        data = { raw: text };
+      }
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status + ' ' + JSON.stringify(data).slice(0, 240));
+      }
+      return data;
+    }
+
+    function findImageUrl(input) {
+      const seen = new Set();
+      const preferredKeys = new Set([
+        'imageurl', 'image_url', 'mainimageurl', 'main_image_url',
+        'mainimage', 'main_image', 'thumbnail', 'cover', 'img'
+      ]);
+
+      function walk(value, key = '') {
+        if (!value) return '';
+        if (typeof value === 'string') {
+          const clean = value.replace(/\\u002F/g, '/').replace(/\\/g, '');
+          if (/^https?:\/\/.+\.(jpg|jpeg|png|webp)(\?.*)?$/i.test(clean)) return clean;
+          if (/^https?:\/\/(?:down-[a-z]{2}|cf)\.img\.susercontent\.com\/file\/[a-zA-Z0-9_-]+/i.test(clean)) return clean;
+          if (preferredKeys.has(key.toLowerCase()) && clean.startsWith('http')) return clean;
+          return '';
+        }
+        if (typeof value !== 'object') return '';
+        if (seen.has(value)) return '';
+        seen.add(value);
+
+        if (Array.isArray(value)) {
+          for (const item of value) {
+            const found = walk(item, key);
+            if (found) return found;
+          }
+          return '';
+        }
+
+        const entries = Object.entries(value);
+        entries.sort(([a], [b]) => {
+          const ap = preferredKeys.has(a.toLowerCase()) || a.toLowerCase().includes('image');
+          const bp = preferredKeys.has(b.toLowerCase()) || b.toLowerCase().includes('image');
+          return Number(bp) - Number(ap);
+        });
+
+        for (const [childKey, childValue] of entries) {
+          const found = walk(childValue, childKey);
+          if (found) return found;
+        }
+        return '';
+      }
+
+      return walk(input);
+    }
+
+    function setStatus(text) {
+      $('status').textContent = text;
+    }
+
+    function showImage(url) {
+      const img = $('previewImg');
+      const box = $('imageUrl');
+      if (!url) {
+        img.style.display = 'none';
+        img.src = '';
+        $('emptyText').style.display = 'block';
+        box.style.display = 'none';
+        box.textContent = '';
+        return;
+      }
+      img.src = url;
+      img.style.display = 'block';
+      $('emptyText').style.display = 'none';
+      box.style.display = 'block';
+      box.textContent = url;
+    }
+  </script>
+</body>
+</html>
