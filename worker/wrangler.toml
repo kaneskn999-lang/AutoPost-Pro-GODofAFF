@@ -1,0 +1,7 @@
+name = "kaneskn-worker"
+main = "src/index.js"
+compatibility_date = "2024-09-01"
+
+# ─── CORS: ใส่ domain ของคุณที่นี่ (หรือ * สำหรับ test) ───
+[vars]
+ALLOWED_ORIGIN = "*"
