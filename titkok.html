@@ -1921,8 +1921,8 @@
 
       <div class="login-form">
         <input id="loginPageEmail" class="login-input" placeholder="Email" autocomplete="email" />
-        <input id="loginPagePassword" class="login-input" type="password" placeholder="Password" autocomplete="current-password"
-          onkeydown="if(event.key==='Enter') signInWithEmail('page')" />
+        <input id="loginPagePassword" class="login-input" type="password" placeholder="Password"
+          autocomplete="current-password" onkeydown="if(event.key==='Enter') signInWithEmail('page')" />
         <div id="loginPageError" class="login-error"></div>
         <div class="login-actions">
           <button class="btn btn-primary" onclick="signInWithEmail('page')" style="width:100%; justify-content:center;">
@@ -1937,399 +1937,407 @@
 
   <div class="app-shell" id="appShell">
 
-  <!-- Mobile Header -->
-  <header class="mobile-header">
-    <div style="display: flex; align-items: center; gap: 14px;">
-      <img class="brand-icon" src="S__300851276.jpg" alt="Logo"
-        style="width: 50px; height: 50px; border-radius: 12px; box-shadow: 0 3px 10px rgba(79, 70, 229, 0.3); object-fit: cover;" />
-      <div>
-        <div class="mobile-brand-name">AutoPost Pro #GODofAFF</div>
-        <div class="mobile-brand-sub">Affiliate Content Factory</div>
-      </div>
-    </div>
-  </header>
-
-  <!-- ─── Sidebar ─── -->
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <img class="brand-icon" src="S__300851276.jpg" alt="Logo" style="object-fit: cover;" />
-      <div>
-        <div class="brand-name">AutoPost Pro #GODofAFF</div>
-        <div class="brand-sub">Affiliate Content Factory</div>
-      </div>
-    </div>
-
-    <a class="nav-item active" href="#" id="nav-create" onclick="switchMainTab('create'); return false;">
-      <span class="material-symbols-rounded">add_circle</span>
-      สร้างโพสต์ใหม่
-    </a>
-
-    <a class="nav-item" href="#" id="nav-history" onclick="switchMainTab('history'); return false;">
-      <span class="material-symbols-rounded">history</span>
-      ประวัติการโพสต์
-    </a>
-
-    <div class="conn-status">
-      <span class="conn-dot offline" id="connDot"></span>
-      <span id="connText">ยังไม่ได้เชื่อมต่อ Worker</span>
-    </div>
-  </aside>
-
-  <!-- ─── Main Content ─── -->
-  <div class="main">
-
-    <div class="top-bar">
-      <div>
-        <div class="page-title">
-          <span class="material-symbols-rounded">bolt</span>
-          สร้างโพสต์ใหม่
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <img class="brand-icon" src="S__300851276.jpg" alt="Logo"
+          style="width: 50px; height: 50px; border-radius: 12px; box-shadow: 0 3px 10px rgba(79, 70, 229, 0.3); object-fit: cover;" />
+        <div>
+          <div class="mobile-brand-name">AutoPost Pro #GODofAFF</div>
+          <div class="mobile-brand-sub">Affiliate Content Factory</div>
         </div>
-        <div class="page-desc">วางลิงก์คลิป TikTok หรือ Instagram Reels และลิงก์สินค้า
-          ระบบจะช่วยแกะวิดีโอและส่งไฟล์ดิบแชร์โพสต์ตรงเข้า n8n ให้คุณทันที!</div>
       </div>
-      <div class="top-user-box" id="topUserBox">
-        <div class="top-user-avatar">
-          <img id="topUserPhoto" alt="" />
-          <span id="topUserInitial" class="material-symbols-rounded" style="font-size:20px;">person</span>
-        </div>
-        <div class="top-user-meta">
-          <div class="top-user-name" id="topUserName">User</div>
-          <div class="top-user-email" id="topUserEmail">-</div>
-        </div>
-        <button type="button" class="top-logout-btn" onclick="signOutFirebase()" title="Log out">
-          <span class="material-symbols-rounded" style="font-size:19px;">logout</span>
-        </button>
-      </div>
-    </div>
+    </header>
 
-    <!-- Mobile SPA Navigation (visible under 1200px) -->
-    <div class="mobile-nav-tabs">
-      <button class="mobile-tab-btn active" id="mob-nav-create" onclick="switchMainTab('create')">
+    <!-- ─── Sidebar ─── -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img class="brand-icon" src="S__300851276.jpg" alt="Logo" style="object-fit: cover;" />
+        <div>
+          <div class="brand-name">AutoPost Pro #GODofAFF</div>
+          <div class="brand-sub">Affiliate Content Factory</div>
+        </div>
+      </div>
+
+      <a class="nav-item active" href="#" id="nav-create" onclick="switchMainTab('create'); return false;">
         <span class="material-symbols-rounded">add_circle</span>
         สร้างโพสต์ใหม่
-      </button>
-      <button class="mobile-tab-btn" id="mob-nav-history" onclick="switchMainTab('history')">
+      </a>
+
+      <a class="nav-item" href="#" id="nav-history" onclick="switchMainTab('history'); return false;">
         <span class="material-symbols-rounded">history</span>
         ประวัติการโพสต์
-      </button>
-    </div>
+      </a>
 
-    <!-- CREATE WORKSPACE -->
-    <div id="createWorkspace">
-      <!-- Connection Settings Banner with Tabs -->
-      <div class="settings-banner" id="settingsBanner"
-        style="flex-direction: column; align-items: stretch; gap: 20px; padding: 20px 24px;">
+      <div class="conn-status">
+        <span class="conn-dot offline" id="connDot"></span>
+        <span id="connText">ยังไม่ได้เชื่อมต่อ Worker</span>
+      </div>
+    </aside>
 
-        <!-- Tab Header -->
-        <div
-          style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-bottom: 1px solid rgba(255, 255, 255, 0.15); padding-bottom: 12px; flex-wrap: wrap; gap: 12px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span class="material-symbols-rounded"
-              style="font-size: 26px; color: #a5b4fc; flex-shrink: 0;">settings</span>
-            <span style="font-weight: 700; font-size: 15px; letter-spacing: -0.3px; color: #fff;">ตั้งค่าระบบ (System
-              Settings)</span>
+    <!-- ─── Main Content ─── -->
+    <div class="main">
+
+      <div class="top-bar">
+        <div>
+          <div class="page-title">
+            <span class="material-symbols-rounded">bolt</span>
+            สร้างโพสต์ใหม่
           </div>
-
-          <!-- Beautiful Glassmorphic Tab Selector -->
-          <div
-            style="display: flex; background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); flex-wrap: wrap; gap: 2px;">
-            <button class="settings-tab-btn active" data-tab="fbpages" onclick="switchSettingsTab('fbpages')">
-              <span class="material-symbols-rounded">pages</span>
-              Facebook Pages
-            </button>
-            <button class="settings-tab-btn" data-tab="shopee" onclick="switchSettingsTab('shopee')">
-              <span class="material-symbols-rounded">shopping_bag</span>
-              Shopee API
-            </button>
-          </div>
+          <div class="page-desc">วางลิงก์คลิป TikTok หรือ Instagram Reels และลิงก์สินค้า
+            ระบบจะช่วยแกะวิดีโอและส่งไฟล์ดิบแชร์โพสต์ตรงเข้า n8n ให้คุณทันที!</div>
         </div>
-
-        <!-- Tab Contents -->
-        <div class="settings-content-wrapper" style="width: 100%;">
-
-          <!-- Facebook Pages Manager -->
-          <div class="settings-tab-content" id="tab-fbpages">
-            <div style="font-weight: 700; font-size: 14px; letter-spacing: -0.3px; color: #fff;">Facebook Pages
-              Manager</div>
-            <div style="font-size: 11.5px; color: rgba(255,255,255,0.6); margin-top: 2px;">จัดการรายชื่อหน้าเพจ Facebook
-              สำหรับเลือกปลายทาง</div>
-            <div class="settings-input-row" style="display: flex; gap: 8px; margin-top: 12px; max-width: 980px; flex-wrap: wrap;">
-              <input id="fbPageNameInput" class="settings-input" style="flex: 1.2; padding: 10px 14px;"
-                placeholder="ชื่อเพจ เช่น เพจรีวิว" />
-              <input id="fbPageIdInput" class="settings-input" style="flex: 1; padding: 10px 14px;"
-                placeholder="Page ID" />
-              <select id="fbTokenSelect" class="settings-input" style="flex: 1; min-width: 150px; padding: 10px 14px; background: rgba(255, 255, 255, 0.08); color: #fff; border: 1px solid rgba(255, 255, 255, 0.15);" onchange="handleTokenSelectChange(this.value)">
-                <option value="" style="background: #1e1b4b; color: #fff;">-- พิมพ์เอง (Manual) --</option>
-              </select>
-              <input id="fbPageTokenInput" class="settings-input" style="flex: 1.8; padding: 10px 14px;"
-                placeholder="Page Access Token" />
-              <button class="btn-settings"
-                style="background:#10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); padding: 10px 16px;"
-                onclick="addFacebookPage()">เพิ่มเพจ</button>
-            </div>
-            <div style="margin-top: 8px;">
-              <button class="btn-settings"
-                style="background:#3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); padding: 8px 14px;"
-                onclick="syncDbData()">Sync Facebook Pages DB</button>
-            </div>
-            <div id="fbPagesList"
-              style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; max-height: 80px; overflow-y: auto;">
-              <!-- Populated via JS -->
-            </div>
+        <div class="top-user-box" id="topUserBox">
+          <div class="top-user-avatar">
+            <img id="topUserPhoto" alt="" />
+            <span id="topUserInitial" class="material-symbols-rounded" style="font-size:20px;">person</span>
           </div>
-
-          <!-- Shopee API Settings -->
-          <div class="settings-tab-content" id="tab-shopee" style="display: none;">
-            <div style="font-weight: 700; font-size: 14px; letter-spacing: -0.3px; color: #fff;">Shopee API Settings</div>
-            <div style="font-size: 11.5px; color: rgba(255,255,255,0.6); margin-top: 2px;">เก็บ App ID และ Secret สำหรับส่งต่อไปยัง Worker / Webhook</div>
-            <div class="settings-input-row" style="display: flex; gap: 8px; margin-top: 12px; max-width: 980px; flex-wrap: wrap;">
-              <input id="shopeeAppIdInput" class="settings-input" style="flex: 1; min-width: 190px; padding: 10px 14px;"
-                placeholder="Shopee App ID / Partner ID" />
-              <input id="shopeeSecretInput" class="settings-input" type="password" style="flex: 1.6; min-width: 240px; padding: 10px 14px;"
-                placeholder="Shopee Secret / Partner Key" />
-              <button class="btn-settings"
-                style="background:#f97316; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3); padding: 10px 16px;"
-                onclick="saveShopeeSettings()">บันทึก</button>
-              <button class="btn-settings"
-                style="background:rgba(255,255,255,0.12); box-shadow:none; padding: 10px 14px;"
-                onclick="toggleShopeeSecretVisibility()">แสดง/ซ่อน</button>
-              <button class="btn-settings"
-                style="background:#ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); padding: 10px 14px;"
-                onclick="clearShopeeSettings()">ล้างค่า</button>
-            </div>
-            <div id="shopeeSettingsStatus"
-              style="font-size: 11.5px; color: rgba(255,255,255,0.65); margin-top: 8px; font-weight: 600;">
-              ยังไม่ได้บันทึก Shopee API
-            </div>
+          <div class="top-user-meta">
+            <div class="top-user-name" id="topUserName">User</div>
+            <div class="top-user-email" id="topUserEmail">-</div>
           </div>
-
+          <button type="button" class="top-logout-btn" onclick="signOutFirebase()" title="Log out">
+            <span class="material-symbols-rounded" style="font-size:19px;">logout</span>
+          </button>
         </div>
       </div>
 
-      <!-- Workspace Grid -->
-      <div class="workspace-grid">
+      <!-- Mobile SPA Navigation (visible under 1200px) -->
+      <div class="mobile-nav-tabs">
+        <button class="mobile-tab-btn active" id="mob-nav-create" onclick="switchMainTab('create')">
+          <span class="material-symbols-rounded">add_circle</span>
+          สร้างโพสต์ใหม่
+        </button>
+        <button class="mobile-tab-btn" id="mob-nav-history" onclick="switchMainTab('history')">
+          <span class="material-symbols-rounded">history</span>
+          ประวัติการโพสต์
+        </button>
+      </div>
 
-        <!-- Unified Card: Form Inputs & Video Preview -->
-        <div class="card">
-          <div class="form-preview-grid">
+      <!-- CREATE WORKSPACE -->
+      <div id="createWorkspace">
+        <!-- Connection Settings Banner with Tabs -->
+        <div class="settings-banner" id="settingsBanner"
+          style="flex-direction: column; align-items: stretch; gap: 20px; padding: 20px 24px;">
 
-            <!-- Inputs Column -->
-            <div class="form-column">
+          <!-- Tab Header -->
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-bottom: 1px solid rgba(255, 255, 255, 0.15); padding-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="material-symbols-rounded"
+                style="font-size: 26px; color: #a5b4fc; flex-shrink: 0;">settings</span>
+              <span style="font-weight: 700; font-size: 15px; letter-spacing: -0.3px; color: #fff;">ตั้งค่าระบบ (System
+                Settings)</span>
+            </div>
 
-              <div class="input-group">
-                <label class="input-label">
-                  <span class="step">1</span>
-                  ลิงก์คลิป (TikTok / IG / RED)
-                </label>
-                <div class="text-input-wrapper">
-                  <span class="material-symbols-rounded">link</span>
-                  <input id="tiktokUrl" class="text-input" placeholder="วางลิงก์คลิป TikTok / IG / Xiaohongshu..."
-                    onkeydown="if(event.key==='Enter') previewClip()" />
+            <!-- Beautiful Glassmorphic Tab Selector -->
+            <div
+              style="display: flex; background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); flex-wrap: wrap; gap: 2px;">
+              <button class="settings-tab-btn active" data-tab="fbpages" onclick="switchSettingsTab('fbpages')">
+                <span class="material-symbols-rounded">pages</span>
+                Facebook Pages
+              </button>
+              <button class="settings-tab-btn" data-tab="shopee" onclick="switchSettingsTab('shopee')">
+                <span class="material-symbols-rounded">shopping_bag</span>
+                Shopee API
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab Contents -->
+          <div class="settings-content-wrapper" style="width: 100%;">
+
+            <!-- Facebook Pages Manager -->
+            <div class="settings-tab-content" id="tab-fbpages">
+              <div style="font-weight: 700; font-size: 14px; letter-spacing: -0.3px; color: #fff;">Facebook Pages
+                Manager</div>
+              <div style="font-size: 11.5px; color: rgba(255,255,255,0.6); margin-top: 2px;">จัดการรายชื่อหน้าเพจ
+                Facebook
+                สำหรับเลือกปลายทาง</div>
+              <div class="settings-input-row"
+                style="display: flex; gap: 8px; margin-top: 12px; max-width: 980px; flex-wrap: wrap;">
+                <input id="fbPageNameInput" class="settings-input" style="flex: 1.2; padding: 10px 14px;"
+                  placeholder="ชื่อเพจ เช่น เพจรีวิว" />
+                <input id="fbPageIdInput" class="settings-input" style="flex: 1; padding: 10px 14px;"
+                  placeholder="Page ID" />
+                <select id="fbTokenSelect" class="settings-input"
+                  style="flex: 1; min-width: 150px; padding: 10px 14px; background: rgba(255, 255, 255, 0.08); color: #fff; border: 1px solid rgba(255, 255, 255, 0.15);"
+                  onchange="handleTokenSelectChange(this.value)">
+                  <option value="" style="background: #1e1b4b; color: #fff;">-- พิมพ์เอง (Manual) --</option>
+                </select>
+                <input id="fbPageTokenInput" class="settings-input" style="flex: 1.8; padding: 10px 14px;"
+                  placeholder="Page Access Token" />
+                <button class="btn-settings"
+                  style="background:#10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); padding: 10px 16px;"
+                  onclick="addFacebookPage()">เพิ่มเพจ</button>
+              </div>
+              <div style="margin-top: 8px;">
+                <button class="btn-settings"
+                  style="background:#3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); padding: 8px 14px;"
+                  onclick="syncDbData()">Sync Facebook Pages DB</button>
+              </div>
+              <div id="fbPagesList"
+                style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; max-height: 80px; overflow-y: auto;">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+
+            <!-- Shopee API Settings -->
+            <div class="settings-tab-content" id="tab-shopee" style="display: none;">
+              <div style="font-weight: 700; font-size: 14px; letter-spacing: -0.3px; color: #fff;">Shopee API Settings
+              </div>
+              <div style="font-size: 11.5px; color: rgba(255,255,255,0.6); margin-top: 2px;">เก็บ App ID และ Secret
+                สำหรับส่งต่อไปยัง Worker / Webhook</div>
+              <div class="settings-input-row"
+                style="display: flex; gap: 8px; margin-top: 12px; max-width: 980px; flex-wrap: wrap;">
+                <input id="shopeeAppIdInput" class="settings-input"
+                  style="flex: 1; min-width: 190px; padding: 10px 14px;" placeholder="Shopee App ID / Partner ID" />
+                <input id="shopeeSecretInput" class="settings-input" type="password"
+                  style="flex: 1.6; min-width: 240px; padding: 10px 14px;" placeholder="Shopee Secret / Partner Key" />
+                <button class="btn-settings"
+                  style="background:#f97316; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3); padding: 10px 16px;"
+                  onclick="saveShopeeSettings()">บันทึก</button>
+                <button class="btn-settings"
+                  style="background:rgba(255,255,255,0.12); box-shadow:none; padding: 10px 14px;"
+                  onclick="toggleShopeeSecretVisibility()">แสดง/ซ่อน</button>
+                <button class="btn-settings"
+                  style="background:#ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); padding: 10px 14px;"
+                  onclick="clearShopeeSettings()">ล้างค่า</button>
+              </div>
+              <div id="shopeeSettingsStatus"
+                style="font-size: 11.5px; color: rgba(255,255,255,0.65); margin-top: 8px; font-weight: 600;">
+                ยังไม่ได้บันทึก Shopee API
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Workspace Grid -->
+        <div class="workspace-grid">
+
+          <!-- Unified Card: Form Inputs & Video Preview -->
+          <div class="card">
+            <div class="form-preview-grid">
+
+              <!-- Inputs Column -->
+              <div class="form-column">
+
+                <div class="input-group">
+                  <label class="input-label">
+                    <span class="step">1</span>
+                    ลิงก์คลิป (TikTok / IG / RED)
+                  </label>
+                  <div class="text-input-wrapper">
+                    <span class="material-symbols-rounded">link</span>
+                    <input id="tiktokUrl" class="text-input" placeholder="วางลิงก์คลิป TikTok / IG / Xiaohongshu..."
+                      onkeydown="if(event.key==='Enter') previewClip()" />
+                  </div>
                 </div>
+
+                <div class="input-group">
+                  <label class="input-label">
+                    <span class="step">2</span>
+                    ชื่อสินค้า
+                  </label>
+                  <div class="text-input-wrapper">
+                    <span class="material-symbols-rounded">shopping_bag</span>
+                    <input id="productName" class="text-input"
+                      placeholder="เช่น หูฟังบลูทูธไร้สาย HZB-25, เครื่องทำน้ำแข็ง..." />
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label class="input-label">
+                    <span class="step">3</span>
+                    ลิงก์สินค้า Lazada / Shopee
+                  </label>
+                  <div class="text-input-wrapper">
+                    <span class="material-symbols-rounded">sell</span>
+                    <input id="productUrl" class="text-input"
+                      placeholder="วางลิงก์สินค้า เช่น https://s.lazada.co.th/..."
+                      oninput="autoDetectPlatform(this.value); scheduleProductImageScrape();" />
+                  </div>
+
+                  <!-- Product Image Preview -->
+                  <div id="productImagePreview"
+                    style="display: none; align-items: center; gap: 12px; margin-top: 10px; padding: 10px 14px; background: rgba(0, 0, 0, 0.03); border-radius: var(--radius-sm); border: 1px dashed var(--border); animation: fadeInSettings 0.2s ease;">
+                    <div
+                      style="width: 44px; height: 44px; border-radius: 8px; overflow: hidden; background: #e2e8f0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border);">
+                      <img id="productPreviewImg" src="" style="width: 100%; height: 100%; object-fit: cover;" />
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                      <p style="font-size: 11px; font-weight: 700; color: var(--text-muted);">รูปสินค้าชิ้นที่ 2
+                        (ดึงข้อมูลสำเร็จ)</p>
+                      <p id="productPreviewUrl"
+                        style="font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">
+                      </p>
+                    </div>
+                    <button type="button"
+                      style="border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;"
+                      onclick="clearProductImagePreview()" title="ลบรูปภาพ">
+                      <span class="material-symbols-rounded" style="font-size: 18px;">close</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Step 4: Choose Destination Facebook Page -->
+                <div class="input-group">
+                  <label class="input-label">
+                    <span class="step">4</span>
+                    เลือก Facebook Page ปลายทาง
+                  </label>
+                  <div class="text-input-wrapper">
+                    <span class="material-symbols-rounded" style="color:var(--accent);">pages</span>
+                    <select id="fbPageSelector" class="select-input" style="padding-left: 46px;">
+                      <!-- จะเติมข้อมูลผ่าน JS -->
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Platform & Note Grid -->
+                <div class="platform-note-grid">
+                  <div class="input-group">
+                    <label class="input-label">แพลตฟอร์ม</label>
+                    <div class="platform-selector">
+                      <button type="button" class="platform-btn" data-platform="lazada" onclick="setPlatform('lazada')">
+                        <span class="material-symbols-rounded" style="color:#e11d48;font-size:18px;">local_mall</span>
+                        Lazada
+                      </button>
+                      <button type="button" class="platform-btn" data-platform="shopee" onclick="setPlatform('shopee')">
+                        <span class="material-symbols-rounded" style="color:#ea580c;font-size:18px;">storefront</span>
+                        Shopee
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="input-group">
+                    <label class="input-label">ข้อมูลเพิ่มเติม (แคมเปญ / โน้ต)</label>
+                    <input id="noteText" class="text-input" style="padding-left: 16px;"
+                      placeholder="โน้ต เช่น SubID, VF1471" />
+                  </div>
+                </div>
+
+                <!-- Bottom Actions -->
+                <div class="form-actions-row">
+                  <button id="postBtnDirect" class="btn"
+                    style="background: #1877f2; color: white; box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);"
+                    onclick="handleDirectAction('post')">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">share</span>
+                    โพสต์ทันที (Post)
+                  </button>
+
+                  <button id="fetchBtn" class="btn btn-secondary" onclick="previewClip()">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">visibility</span>
+                    พรีวิวดูคลิป
+                  </button>
+
+                  <button class="btn btn-outline" onclick="clearAll()" title="ล้างข้อมูลทั้งหมด">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">delete_sweep</span>
+                    ล้างข้อมูล
+                  </button>
+                </div>
+
               </div>
 
-              <div class="input-group">
-                <label class="input-label">
-                  <span class="step">2</span>
-                  ชื่อสินค้า
-                </label>
-                <div class="text-input-wrapper">
-                  <span class="material-symbols-rounded">shopping_bag</span>
-                  <input id="productName" class="text-input"
-                    placeholder="เช่น หูฟังบลูทูธไร้สาย HZB-25, เครื่องทำน้ำแข็ง..." />
-                </div>
-              </div>
-
-              <div class="input-group">
-                <label class="input-label">
-                  <span class="step">3</span>
-                  ลิงก์สินค้า Lazada / Shopee
-                </label>
-                <div class="text-input-wrapper">
-                  <span class="material-symbols-rounded">sell</span>
-                  <input id="productUrl" class="text-input" placeholder="วางลิงก์สินค้า เช่น https://s.lazada.co.th/..."
-                    oninput="autoDetectPlatform(this.value); scheduleProductImageScrape();" />
+              <!-- Video Preview Column -->
+              <div class="preview-column">
+                <div class="card-title" style="margin-bottom: 12px; align-self: flex-start;">
+                  <span class="material-symbols-rounded" style="color:var(--accent);">smart_display</span>
+                  ตัวอย่างคลิป
                 </div>
 
-                <!-- Product Image Preview -->
-                <div id="productImagePreview"
-                  style="display: none; align-items: center; gap: 12px; margin-top: 10px; padding: 10px 14px; background: rgba(0, 0, 0, 0.03); border-radius: var(--radius-sm); border: 1px dashed var(--border); animation: fadeInSettings 0.2s ease;">
-                  <div
-                    style="width: 44px; height: 44px; border-radius: 8px; overflow: hidden; background: #e2e8f0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border);">
-                    <img id="productPreviewImg" src="" style="width: 100%; height: 100%; object-fit: cover;" />
+                <div class="preview-box" id="previewBox">
+                  <div class="preview-placeholder">
+                    <span class="material-symbols-rounded">movie</span>
+                    <p>ยังไม่มีคลิปที่ดึง<br />วางลิงก์แล้วกด <strong>ดึงคลิปดูก่อน</strong></p>
                   </div>
-                  <div style="flex: 1; min-width: 0;">
-                    <p style="font-size: 11px; font-weight: 700; color: var(--text-muted);">รูปสินค้าชิ้นที่ 2
-                      (ดึงข้อมูลสำเร็จ)</p>
-                    <p id="productPreviewUrl"
-                      style="font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">
-                    </p>
-                  </div>
-                  <button type="button"
-                    style="border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;"
-                    onclick="clearProductImagePreview()" title="ลบรูปภาพ">
-                    <span class="material-symbols-rounded" style="font-size: 18px;">close</span>
+                </div>
+
+                <div class="preview-controls">
+                  <button class="btn btn-outline btn-sm" onclick="downloadMp4()" style="flex: 1;">
+                    <span class="material-symbols-rounded" style="font-size:18px;">download</span>
+                    ดาวน์โหลด
+                  </button>
+                  <button class="btn btn-outline btn-sm" onclick="copyVideoUrl()" style="flex: 1;">
+                    <span class="material-symbols-rounded" style="font-size:18px;">content_copy</span>
+                    คัดลอก URL
                   </button>
                 </div>
               </div>
 
-              <!-- Step 4: Choose Destination Facebook Page -->
-              <div class="input-group">
-                <label class="input-label">
-                  <span class="step">4</span>
-                  เลือก Facebook Page ปลายทาง
-                </label>
-                <div class="text-input-wrapper">
-                  <span class="material-symbols-rounded" style="color:var(--accent);">pages</span>
-                  <select id="fbPageSelector" class="select-input" style="padding-left: 46px;">
-                    <!-- จะเติมข้อมูลผ่าน JS -->
-                  </select>
-                </div>
-              </div>
-
-              <!-- Platform & Note Grid -->
-              <div class="platform-note-grid">
-                <div class="input-group">
-                  <label class="input-label">แพลตฟอร์ม</label>
-                  <div class="platform-selector">
-                    <button type="button" class="platform-btn" data-platform="lazada" onclick="setPlatform('lazada')">
-                      <span class="material-symbols-rounded" style="color:#e11d48;font-size:18px;">local_mall</span>
-                      Lazada
-                    </button>
-                    <button type="button" class="platform-btn" data-platform="shopee" onclick="setPlatform('shopee')">
-                      <span class="material-symbols-rounded" style="color:#ea580c;font-size:18px;">storefront</span>
-                      Shopee
-                    </button>
-                  </div>
-                </div>
-
-                <div class="input-group">
-                  <label class="input-label">ข้อมูลเพิ่มเติม (แคมเปญ / โน้ต)</label>
-                  <input id="noteText" class="text-input" style="padding-left: 16px;"
-                    placeholder="โน้ต เช่น SubID, VF1471" />
-                </div>
-              </div>
-
-              <!-- Bottom Actions -->
-              <div class="form-actions-row">
-                <button id="postBtnDirect" class="btn"
-                  style="background: #1877f2; color: white; box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);"
-                  onclick="handleDirectAction('post')">
-                  <span class="material-symbols-rounded" style="font-size: 20px;">share</span>
-                  โพสต์ทันที (Post)
-                </button>
-
-                <button id="fetchBtn" class="btn btn-secondary" onclick="previewClip()">
-                  <span class="material-symbols-rounded" style="font-size: 20px;">visibility</span>
-                  พรีวิวดูคลิป
-                </button>
-
-                <button class="btn btn-outline" onclick="clearAll()" title="ล้างข้อมูลทั้งหมด">
-                  <span class="material-symbols-rounded" style="font-size: 20px;">delete_sweep</span>
-                  ล้างข้อมูล
-                </button>
-              </div>
-
             </div>
-
-            <!-- Video Preview Column -->
-            <div class="preview-column">
-              <div class="card-title" style="margin-bottom: 12px; align-self: flex-start;">
-                <span class="material-symbols-rounded" style="color:var(--accent);">smart_display</span>
-                ตัวอย่างคลิป
-              </div>
-
-              <div class="preview-box" id="previewBox">
-                <div class="preview-placeholder">
-                  <span class="material-symbols-rounded">movie</span>
-                  <p>ยังไม่มีคลิปที่ดึง<br />วางลิงก์แล้วกด <strong>ดึงคลิปดูก่อน</strong></p>
-                </div>
-              </div>
-
-              <div class="preview-controls">
-                <button class="btn btn-outline btn-sm" onclick="downloadMp4()" style="flex: 1;">
-                  <span class="material-symbols-rounded" style="font-size:18px;">download</span>
-                  ดาวน์โหลด
-                </button>
-                <button class="btn btn-outline btn-sm" onclick="copyVideoUrl()" style="flex: 1;">
-                  <span class="material-symbols-rounded" style="font-size:18px;">content_copy</span>
-                  คัดลอก URL
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-
-      <!-- History Card below the Form (New addition!) -->
-      <div class="card" style="margin-top: 24px;">
-        <div
-          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-          <div class="card-title" style="margin-bottom: 0;">
-            <span class="material-symbols-rounded" style="color: var(--accent);">history</span>
-            ประวัติการโพสต์ล่าสุด (Recent History)
-          </div>
-          <button class="btn btn-outline btn-xs" onclick="switchMainTab('history')"
-            style="padding: 6px 12px; font-weight: 700; font-size: 12.5px; display: inline-flex; align-items: center; gap: 4px; border-radius: 8px; font-family: inherit;">
-            ดูประวัติทั้งหมด
-            <span class="material-symbols-rounded" style="font-size: 16px;">arrow_forward</span>
-          </button>
-        </div>
-
-        <!-- Live History Grid below the Form -->
-        <div id="recentHistoryGrid" class="history-grid"
-          style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
-          <!-- Will be rendered dynamically via JS -->
-        </div>
-      </div>
-
-    </div> <!-- END CREATE WORKSPACE -->
-
-    <!-- HISTORY WORKSPACE -->
-    <div id="historyWorkspace" style="display: none;">
-      <div class="card" style="padding: 24px;">
-
-        <!-- Filter and Search Header -->
-        <div
-          style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
-          <!-- Left: Search Box -->
-          <div class="text-input-wrapper" style="flex: 1; max-width: 400px; min-width: 250px;">
-            <span class="material-symbols-rounded" style="color: var(--text-muted);">search</span>
-            <input id="historySearchInput" class="text-input" style="padding-left: 46px;"
-              placeholder="ค้นหาชื่อสินค้า, แคปชัน, โน้ต..." oninput="filterHistory()" />
           </div>
 
-          <!-- Middle: Platform Select Pills -->
+        </div>
+
+        <!-- History Card below the Form (New addition!) -->
+        <div class="card" style="margin-top: 24px;">
           <div
-            style="display: flex; background: #f1f5f9; padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--border); gap: 2px;">
-            <button class="tab-btn active" id="history-filter-all" onclick="setHistoryFilter('all')"
-              style="padding: 8px 16px; border-radius: 8px;">ทั้งหมด</button>
-            <button class="tab-btn" id="history-filter-lazada" onclick="setHistoryFilter('lazada')"
-              style="padding: 8px 16px; border-radius: 8px;">Lazada</button>
-            <button class="tab-btn" id="history-filter-shopee" onclick="setHistoryFilter('shopee')"
-              style="padding: 8px 16px; border-radius: 8px;">Shopee</button>
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+            <div class="card-title" style="margin-bottom: 0;">
+              <span class="material-symbols-rounded" style="color: var(--accent);">history</span>
+              ประวัติการโพสต์ล่าสุด (Recent History)
+            </div>
+            <button class="btn btn-outline btn-xs" onclick="switchMainTab('history')"
+              style="padding: 6px 12px; font-weight: 700; font-size: 12.5px; display: inline-flex; align-items: center; gap: 4px; border-radius: 8px; font-family: inherit;">
+              ดูประวัติทั้งหมด
+              <span class="material-symbols-rounded" style="font-size: 16px;">arrow_forward</span>
+            </button>
           </div>
 
-          <!-- Right: Sync Button -->
-          <button class="btn btn-primary" onclick="syncDbData()"
-            style="padding: 10px 18px; font-size: 13.5px; border-radius: var(--radius-sm); height: 44px; display: inline-flex; align-items: center; gap: 8px;">
-            <span class="material-symbols-rounded" id="syncSpinnerIcon">sync</span>
-            ดึงข้อมูลล่าสุด
-          </button>
+          <!-- Live History Grid below the Form -->
+          <div id="recentHistoryGrid" class="history-grid"
+            style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+            <!-- Will be rendered dynamically via JS -->
+          </div>
         </div>
 
-        <!-- History Items Grid -->
-        <div id="historyItemsGrid" class="history-grid">
-          <!-- Will be rendered dynamically via JS -->
-        </div>
+      </div> <!-- END CREATE WORKSPACE -->
 
+      <!-- HISTORY WORKSPACE -->
+      <div id="historyWorkspace" style="display: none;">
+        <div class="card" style="padding: 24px;">
+
+          <!-- Filter and Search Header -->
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+            <!-- Left: Search Box -->
+            <div class="text-input-wrapper" style="flex: 1; max-width: 400px; min-width: 250px;">
+              <span class="material-symbols-rounded" style="color: var(--text-muted);">search</span>
+              <input id="historySearchInput" class="text-input" style="padding-left: 46px;"
+                placeholder="ค้นหาชื่อสินค้า, แคปชัน, โน้ต..." oninput="filterHistory()" />
+            </div>
+
+            <!-- Middle: Platform Select Pills -->
+            <div
+              style="display: flex; background: #f1f5f9; padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--border); gap: 2px;">
+              <button class="tab-btn active" id="history-filter-all" onclick="setHistoryFilter('all')"
+                style="padding: 8px 16px; border-radius: 8px;">ทั้งหมด</button>
+              <button class="tab-btn" id="history-filter-lazada" onclick="setHistoryFilter('lazada')"
+                style="padding: 8px 16px; border-radius: 8px;">Lazada</button>
+              <button class="tab-btn" id="history-filter-shopee" onclick="setHistoryFilter('shopee')"
+                style="padding: 8px 16px; border-radius: 8px;">Shopee</button>
+            </div>
+
+            <!-- Right: Sync Button -->
+            <button class="btn btn-primary" onclick="syncDbData()"
+              style="padding: 10px 18px; font-size: 13.5px; border-radius: var(--radius-sm); height: 44px; display: inline-flex; align-items: center; gap: 8px;">
+              <span class="material-symbols-rounded" id="syncSpinnerIcon">sync</span>
+              ดึงข้อมูลล่าสุด
+            </button>
+          </div>
+
+          <!-- History Items Grid -->
+          <div id="historyItemsGrid" class="history-grid">
+            <!-- Will be rendered dynamically via JS -->
+          </div>
+
+        </div>
       </div>
+
+
     </div>
-
-
-  </div>
 
   </div>
 
@@ -2341,7 +2349,7 @@
     // STATE & CONFIG
     // ═══════════════════════════════════════════
     // Hardcode endpoints here before delivering to each customer.
-    const WORKER_BASE_URL = 'https://tiktok-fetcher.p2scalworkhost.workers.dev';
+    const WORKER_BASE_URL = 'https://kaneskn-worker.kaneskn999.workers.dev';
     const N8N_WEBHOOK_URL = 'https://n8n-9ych.srv1728018.hstgr.cloud/webhook/273e7d20-ebd4-4067-9d80-90eb34b1b900';
     let workerBaseUrl = WORKER_BASE_URL.replace(/\/+$/, '');
     let previewData = null;       // Cached preview response metadata
@@ -2360,11 +2368,11 @@
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyAzSHHw4_eXq5M0o6cKDRfO8SxGfi9qY9I",
       authDomain: "postface-90b09.firebaseapp.com",
-    projectId: "postface-90b09",
-    storageBucket: "postface-90b09.firebasestorage.app",
-    messagingSenderId: "1030979365994",
-    appId: "1:1030979365994:web:fd5570afbbf898617eae13",
-    measurementId: "G-MRM5XG7XKW"
+      projectId: "postface-90b09",
+      storageBucket: "postface-90b09.firebasestorage.app",
+      messagingSenderId: "1030979365994",
+      appId: "1:1030979365994:web:fd5570afbbf898617eae13",
+      measurementId: "G-MRM5XG7XKW"
     };
 
     // SPA and History State
