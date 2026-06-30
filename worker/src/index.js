@@ -552,11 +552,16 @@ async function fetchTiooTikTok(tiktokUrl) {
   }
 
   const payload = await res.json();
-  if (!payload.status || !Array.isArray(payload.video) || payload.video.length === 0) {
+  if (!payload.status || !Array.isArray(payload.video)) {
     throw new Error(payload.message || 'Tioo did not return TikTok video links');
   }
 
-  const videoLinks = payload.video;
+  // กรองลิงก์ของ cdn.tioo.eu.org ออกเนื่องจากเซิร์ฟเวอร์ปลายทางมีปัญหา 522 Connection Timeout
+  const videoLinks = payload.video.filter(link => link && !link.includes('cdn.tioo.eu.org'));
+  if (videoLinks.length === 0) {
+    throw new Error('Tioo did not return any working video links');
+  }
+
   // ใช้ลิงก์วิดีโอตัวแรกและตัวสำรอง
   const play = videoLinks[0];
   const hdplay = videoLinks[1] || videoLinks[0];
