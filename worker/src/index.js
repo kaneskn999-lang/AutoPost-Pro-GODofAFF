@@ -1191,30 +1191,45 @@ async function handleProxyVideo(request) {
 
   const targetUrl = decodeURIComponent(url);
 
-  // Download video from actual CDN with appropriate headers
-  const videoRes = await fetch(targetUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Referer': targetUrl.includes('instagram.com') ? 'https://www.instagram.com/' : 'https://www.tiktok.com/'
-    }
+  // Download video from actual CDN with appropriate headers and Range header forwarding
+  const rangeHeader = request.headers.get('Range');
+  const headers = new Headers({
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Referer': targetUrl.includes('instagram.com') ? 'https://www.instagram.com/' : 'https://www.tiktok.com/'
   });
+  if (rangeHeader) {
+    headers.set('Range', rangeHeader);
+  }
 
-  if (!videoRes.ok) {
+  const videoRes = await fetch(targetUrl, { headers });
+
+  if (!videoRes.ok && videoRes.status !== 206) {
     return new Response(`Failed to fetch video from CDN: ${videoRes.status}`, { status: 502 });
   }
 
   // Set appropriate headers to pass Content-Type & Content-Length through
-  const headers = new Headers();
-  headers.set('Content-Type', videoRes.headers.get('Content-Type') || 'video/mp4');
+  const responseHeaders = new Headers();
+  responseHeaders.set('Content-Type', videoRes.headers.get('Content-Type') || 'video/mp4');
+  
   const contentLength = videoRes.headers.get('Content-Length');
   if (contentLength) {
-    headers.set('Content-Length', contentLength);
+    responseHeaders.set('Content-Length', contentLength);
   }
 
-  // Stream video binary response
+  const contentRange = videoRes.headers.get('Content-Range');
+  if (contentRange) {
+    responseHeaders.set('Content-Range', contentRange);
+  }
+
+  const acceptRanges = videoRes.headers.get('Accept-Ranges');
+  if (acceptRanges) {
+    responseHeaders.set('Accept-Ranges', acceptRanges);
+  }
+
+  // Stream video binary response (supports 206 Partial Content)
   return new Response(videoRes.body, {
-    status: 200,
-    headers: headers
+    status: videoRes.status,
+    headers: responseHeaders
   });
 }
 
