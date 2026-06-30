@@ -2341,9 +2341,7 @@
     // STATE & CONFIG
     // ═══════════════════════════════════════════
     // Hardcode endpoints here before delivering to each customer.
-    const WORKER_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:'
-      ? 'http://127.0.0.1:8787'
-      : 'https://kaneskn-worker.kaneskn999.workers.dev';
+    const WORKER_BASE_URL = 'https://tiktok-fetcher.p2scalworkhost.workers.dev';
     const N8N_WEBHOOK_URL = 'https://n8n-9ych.srv1728018.hstgr.cloud/webhook/273e7d20-ebd4-4067-9d80-90eb34b1b900';
     let workerBaseUrl = WORKER_BASE_URL.replace(/\/+$/, '');
     let previewData = null;       // Cached preview response metadata
@@ -2717,13 +2715,14 @@
 
         previewData = data.preview;
 
-        // Render Quick Video Preview Player inside workspace (HTML video can stream direct CDN URL)
+        // Render Quick Video Preview Player inside workspace using Cloudflare Worker CORS Bypass Proxy
+        const proxyUrl = `${workerBaseUrl}/api/proxy-video?url=${encodeURIComponent(previewData.videoUrl)}`;
         document.getElementById('previewBox').innerHTML = `
           <span class="status-badge preview">
             <span class="material-symbols-rounded" style="font-size:14px;">visibility</span>
             ตัวอย่างคลิป
           </span>
-          <video controls playsinline autoplay muted src="${workerBaseUrl}/api/proxy-video?url=${encodeURIComponent(previewData.videoUrl)}"></video>
+          <video controls playsinline autoplay muted src="${proxyUrl}"></video>
         `;
 
         showToast('ดึงตัวอย่างสำเร็จ! ตรวจสอบแล้วกดโพสต์ส่ง n8n ได้เลย', 'info');
