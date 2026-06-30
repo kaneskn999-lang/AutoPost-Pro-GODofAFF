@@ -2725,15 +2725,16 @@
 
         // Render Quick Video Preview Player inside workspace using Cloudflare Worker CORS Bypass Proxy
         const proxyUrl = `${workerBaseUrl}/api/proxy-video?url=${encodeURIComponent(previewData.videoUrl)}`;
+        const providerName = previewData.provider ? `ตัวอย่างคลิป (${previewData.provider})` : 'ตัวอย่างคลิป';
         document.getElementById('previewBox').innerHTML = `
           <span class="status-badge preview">
             <span class="material-symbols-rounded" style="font-size:14px;">visibility</span>
-            ตัวอย่างคลิป
+            ${providerName}
           </span>
           <video controls playsinline autoplay muted src="${proxyUrl}"></video>
         `;
 
-        showToast('ดึงตัวอย่างสำเร็จ! ตรวจสอบแล้วกดโพสต์ส่ง n8n ได้เลย', 'info');
+        showToast(`ดึงตัวอย่างสำเร็จ! (ผ่านระบบ ${previewData.provider || 'ปกติ'})`, 'info');
 
       } catch (err) {
         console.error(err);
@@ -2815,16 +2816,6 @@
       const userMeta = await getWebhookUserMeta();
       const currentShopeeSettings = getCurrentShopeeSettings();
 
-      if (platform === 'shopee' && (!currentShopeeSettings.appId || !currentShopeeSettings.secret)) {
-        switchSettingsTab('shopee');
-        showToast('กรุณากรอก Shopee App ID และ Secret ก่อนโพสต์ Shopee', 'error');
-        if (!currentShopeeSettings.appId) {
-          document.getElementById('shopeeAppIdInput')?.focus();
-        } else {
-          document.getElementById('shopeeSecretInput')?.focus();
-        }
-        return;
-      }
 
       // 1. Clear form fields immediately to let the user paste the next URL right away!
       document.getElementById('tiktokUrl').value = '';
@@ -3255,14 +3246,11 @@
       const appIdInput = document.getElementById('shopeeAppIdInput');
       const secretInput = document.getElementById('shopeeSecretInput');
       const current = {
-        appId: (appIdInput?.value || shopeeSettings.appId || '').trim(),
-        secret: (secretInput?.value || shopeeSettings.secret || '').trim()
+        appId: (appIdInput ? appIdInput.value : shopeeSettings.appId || '').trim(),
+        secret: (secretInput ? secretInput.value : shopeeSettings.secret || '').trim()
       };
 
-      if (current.appId || current.secret) {
-        shopeeSettings = current;
-      }
-
+      shopeeSettings = current;
       return current;
     }
 
